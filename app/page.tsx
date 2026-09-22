@@ -5,23 +5,33 @@ import {
   Activity,
   Bot,
   CalendarDays,
+  CloudUpload,
+  Dumbbell,
+  Loader2,
   Plus,
   Scale,
   Settings,
   UtensilsCrossed,
+  X,
 } from "lucide-react";
 import { BodyMetricsCard } from "@/components/BodyMetricsCard";
 import { BodyCompositionDialog } from "@/components/BodyCompositionDialog";
 import { CompositionCharts } from "@/components/CompositionCharts";
+import { EnergyBalanceCard } from "@/components/EnergyBalanceCard";
+import { ExerciseLogDialog } from "@/components/ExerciseLogDialog";
 import { FastingTracker } from "@/components/FastingTracker";
 import { MealLogCard } from "@/components/MealLogCard";
 import { MealLogDialog } from "@/components/MealLogDialog";
 import { MealPlanner } from "@/components/MealPlanner";
+import { MilestoneBar } from "@/components/MilestoneBar";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import { AIDiagnosisModal } from "@/components/AIDiagnosisModal";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useGlucoFitStore } from "@/lib/storage";
+import { useGlucoFitStore, useSyncSettingsStore } from "@/lib/storage";
+import { useProfileStore } from "@/lib/profile";
+import { isSyncConfigured, syncAll, useSyncRuntimeStore } from "@/lib/cloud";
 import { fmtDate } from "@/lib/utils";
 import type { MealLogPrefill, MealRecommendation } from "@/types";
 
@@ -30,14 +40,35 @@ export default function Home() {
   const [bodyDialogOpen, setBodyDialogOpen] = useState(false);
   const [mealDialogOpen, setMealDialogOpen] = useState(false);
   const [mealPrefill, setMealPrefill] = useState<MealLogPrefill | null>(null);
+  const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [diagnosisOpen, setDiagnosisOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
 
   const mealLogs = useGlucoFitStore((s) => s.mealLogs);
+  const profile = useProfileStore((s) => s.profile);
+  const onboardingDismissed = useProfileStore((s) => s.onboardingDismissed);
+  const syncSettings = useSyncSettingsStore((s) => s.syncSettings);
+  const syncing = useSyncRuntimeStore((s) => s.syncing);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 首访 Onboarding：无档案且未跳过时自动弹出
+  useEffect(() => {
+    if (mounted && !profile && !onboardingDismissed) {
+      setOnboardingOpen(true);
+    }
+  }, [mounted, profile, onboardingDismissed]);
+
+  // 同步结果轻提示
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const todayMeals = useMemo(() => {
     const today = fmtDate(new Date());
@@ -87,6 +118,23 @@ export default function Home() {
     });
   };
 
+  const handleSync = async () => {
+    if (!isSyncConfigured(syncSettings)) {
+      setSettingsOpen(true);
+      setToast({ ok: false, message: "请先在设置中配置云端同步" });
+      return;
+    }
+    try {
+      await syncAll();
+      setToast({ ok: true, message: "云端同步完成" });
+    } catch (e) {
+      setToast({
+        ok: false,
+        message: e instanceof Error ? e.message : "同步失败",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* 顶栏 */}
@@ -98,7 +146,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-base font-bold leading-tight">GlucoFit</h1>
-              <p className="text-[11px] text-muted-foreground">控糖与代谢改善系统 · v2.0</p>
+              <p className="text-[11px] text-muted-foreground">控糖与代谢改善系统 · v2.1</p>
             </div>
           </div>
 
@@ -120,10 +168,27 @@ export default function Home() {
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">记录饮食</span>
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setExerciseDialogOpen(true)}>
+              <Dumbbell className="h-4 w-4" />
+              <span className="hidden sm:inline">记运动</span>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
-              title="AI 模型设置 (BYOK)"
+              title="云端同步"
+              onClick={handleSync}
+              disabled={syncing}
+            >
+              {syncing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CloudUpload className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="设置"
               onClick={() => setSettingsOpen(true)}
             >
               <Settings className="h-4 w-4" />
@@ -135,6 +200,13 @@ export default function Home() {
       {/* 仪表盘 */}
       <main className="mx-auto max-w-7xl p-4 md:p-6">
         <div className="grid gap-5 xl:grid-cols-3">
+          {/* 减重里程碑条（建档后常驻顶部） */}
+          {profile && (
+            <div className="xl:col-span-3">
+              <MilestoneBar />
+            </div>
+          )}
+
           <div className="xl:col-span-2">
             <BodyMetricsCard onOpenRecord={() => setBodyDialogOpen(true)} />
           </div>
@@ -178,8 +250,11 @@ export default function Home() {
             </CardContent>
           </Card>
 
+          {/* 今日热量收支环 + 当日运动记录 */}
+          <EnergyBalanceCard />
+
           {/* 热量预算 + AI 控糖三餐推荐 */}
-          <div className="xl:col-span-3">
+          <div className="xl:col-span-2">
             <MealPlanner
               onAdopt={handleAdoptRecommendation}
               onOpenSettings={() => setSettingsOpen(true)}
@@ -192,6 +267,27 @@ export default function Home() {
         </p>
       </main>
 
+      {/* 同步结果轻提示 */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-sm shadow-lg ${
+            toast.ok
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-600"
+          }`}
+        >
+          {toast.message}
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            aria-label="关闭提示"
+            className="text-current/60 hover:text-current"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* 全局弹窗 */}
       <BodyCompositionDialog open={bodyDialogOpen} onOpenChange={setBodyDialogOpen} />
       <MealLogDialog
@@ -199,8 +295,14 @@ export default function Home() {
         onOpenChange={setMealDialogOpen}
         prefill={mealPrefill}
       />
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <ExerciseLogDialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen} />
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onOpenOnboarding={() => setOnboardingOpen(true)}
+      />
       <AIDiagnosisModal open={diagnosisOpen} onOpenChange={setDiagnosisOpen} />
+      <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
     </div>
   );
 }

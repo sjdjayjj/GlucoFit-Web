@@ -5,6 +5,7 @@ export const ACTIVITY_LEVELS = [
   { value: 1.2, label: "久坐" },
   { value: 1.375, label: "轻度活动" },
   { value: 1.55, label: "中度活动" },
+  { value: 1.725, label: "重度活动" },
 ] as const;
 
 /** 推荐热量赤字：300-500 kcal 区间中值，避免过大赤字造成 IR 恶化 */

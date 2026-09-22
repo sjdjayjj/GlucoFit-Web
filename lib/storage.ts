@@ -8,7 +8,10 @@ import type {
   AISettings,
   BodyCompositionRecord,
   MealLog,
+  SyncSettings,
   UserGoalConfig,
+  ExerciseLog,
+  UserProfile,
 } from "@/types";
 import { computeMealScore } from "@/lib/scoring";
 import { daysAgoDateStr, uid } from "@/lib/utils";
@@ -102,11 +105,41 @@ function mockMealLogs(): MealLog[] {
   ];
 }
 
+function mockExerciseLogs(): ExerciseLog[] {
+  const at = (daysAgo: number, hour: number, minute: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(hour, minute, 0, 0);
+    return d.toISOString();
+  };
+  return [
+    {
+      id: uid(),
+      timestamp: at(0, 13, 10),
+      category: "post_meal_walk",
+      durationMinutes: 15,
+      caloriesBurned: 62,
+      isPostMeal: true,
+      muscleFeel: ["无疲劳感"],
+    },
+    {
+      id: uid(),
+      timestamp: at(1, 19, 30),
+      category: "resistance",
+      durationMinutes: 30,
+      caloriesBurned: 208,
+      isPostMeal: false,
+      muscleFeel: ["下肢酸胀", "核心紧绷"],
+    },
+  ];
+}
+
 // ---------- Store ----------
 
 interface GlucoFitState {
   bodyRecords: BodyCompositionRecord[];
   mealLogs: MealLog[];
+  exerciseLogs: ExerciseLog[];
   goal: UserGoalConfig;
   /** 进食窗口开始小时（如 16:8 模式下默认 10:00 开始，18:00 结束） */
   eatingWindowStartHour: number;
@@ -114,9 +147,17 @@ interface GlucoFitState {
   activityFactor: number;
   addBodyRecord: (record: BodyCompositionRecord) => void;
   addMealLog: (log: MealLog) => void;
+  addExerciseLog: (log: ExerciseLog) => void;
+  deleteExerciseLog: (id: string) => void;
   updateGoal: (partial: Partial<UserGoalConfig>) => void;
   setEatingWindowStartHour: (hour: number) => void;
   setActivityFactor: (factor: number) => void;
+  /** 云同步合并：按 id 去重、时间新者胜，返回合并数量 */
+  mergeCloudData: (cloud: {
+    bodyRecords?: BodyCompositionRecord[];
+    mealLogs?: MealLog[];
+    exerciseLogs?: ExerciseLog[];
+  }) => void;
 }
 
 export const useGlucoFitStore = create<GlucoFitState>()(
@@ -124,6 +165,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
     (set) => ({
       bodyRecords: mockBodyRecords(),
       mealLogs: mockMealLogs(),
+      exerciseLogs: mockExerciseLogs(),
       goal: { targetWeightKg: 70, targetBodyFatRate: 18, fastingProtocol: "16:8" },
       eatingWindowStartHour: 10,
       activityFactor: 1.375,
@@ -139,11 +181,54 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             a.timestamp.localeCompare(b.timestamp)
           ),
         })),
+      addExerciseLog: (log) =>
+        set((s) => ({
+          exerciseLogs: [...s.exerciseLogs, log].sort((a, b) =>
+            a.timestamp.localeCompare(b.timestamp)
+          ),
+        })),
+      deleteExerciseLog: (id) =>
+        set((s) => ({ exerciseLogs: s.exerciseLogs.filter((l) => l.id !== id) })),
       updateGoal: (partial) =>
         set((s) => ({ goal: { ...s.goal, ...partial } })),
       setEatingWindowStartHour: (hour) =>
         set({ eatingWindowStartHour: hour }),
       setActivityFactor: (factor) => set({ activityFactor: factor }),
+      mergeCloudData: ({ bodyRecords, mealLogs, exerciseLogs }) =>
+        set((s) => {
+          const next: Partial<GlucoFitState> = {};
+          if (bodyRecords?.length) {
+            const byId = new Map(s.bodyRecords.map((r) => [r.id, r]));
+            for (const r of bodyRecords) {
+              const local = byId.get(r.id);
+              if (!local || r.date >= local.date) byId.set(r.id, r);
+            }
+            next.bodyRecords = Array.from(byId.values()).sort((a, b) =>
+              a.date.localeCompare(b.date)
+            );
+          }
+          if (mealLogs?.length) {
+            const byId = new Map(s.mealLogs.map((r) => [r.id, r]));
+            for (const r of mealLogs) {
+              const local = byId.get(r.id);
+              if (!local || r.timestamp >= local.timestamp) byId.set(r.id, r);
+            }
+            next.mealLogs = Array.from(byId.values()).sort((a, b) =>
+              a.timestamp.localeCompare(b.timestamp)
+            );
+          }
+          if (exerciseLogs?.length) {
+            const byId = new Map(s.exerciseLogs.map((r) => [r.id, r]));
+            for (const r of exerciseLogs) {
+              const local = byId.get(r.id);
+              if (!local || r.timestamp >= local.timestamp) byId.set(r.id, r);
+            }
+            next.exerciseLogs = Array.from(byId.values()).sort((a, b) =>
+              a.timestamp.localeCompare(b.timestamp)
+            );
+          }
+          return next;
+        }),
     }),
     {
       name: STORAGE_KEY,
@@ -213,6 +298,30 @@ export const useAISettingsStore = create<AISettingsState>()(
     }),
     {
       name: "glucofit-ai-settings",
+      storage: createJSONStorage(() => obfuscatedStorage),
+    }
+  )
+);
+
+// ---------- 云同步设置 (v2.1，BYOK Cloudflare D1，混淆加密后仅存于本浏览器) ----------
+
+interface SyncSettingsState {
+  syncSettings: SyncSettings;
+  lastSyncAt: string | null;
+  updateSyncSettings: (settings: SyncSettings) => void;
+  setLastSyncAt: (iso: string) => void;
+}
+
+export const useSyncSettingsStore = create<SyncSettingsState>()(
+  persist(
+    (set) => ({
+      syncSettings: { accountId: "", databaseId: "", apiToken: "", syncCode: "" },
+      lastSyncAt: null,
+      updateSyncSettings: (syncSettings) => set({ syncSettings }),
+      setLastSyncAt: (lastSyncAt) => set({ lastSyncAt }),
+    }),
+    {
+      name: "glucofit-sync-settings",
       storage: createJSONStorage(() => obfuscatedStorage),
     }
   )

@@ -76,6 +76,61 @@ export interface MealLogPrefill {
   sourceNote?: string;
 }
 
+// --- 8. 用户初始体态档案与代谢基准 (v2.1) ---
+export interface UserProfile {
+  uid: string;
+  email?: string;
+  gender: "male" | "female" | "other";
+  birthYear: number; // 出生年份
+  heightCm: number; // 身高 (cm)
+  initialWeightKg: number; // 初始空腹体重 (kg)
+  initialBodyFatRate?: number; // 初始体脂率 (%，选填)
+  initialFatMassKg?: number; // 初始脂肪量 (kg，选填)
+  initialProteinKg?: number; // 初始骨骼肌/蛋白质量 (kg，选填)
+  targetWeightKg: number; // 目标体重 (kg)
+  targetBodyFatRate?: number; // 目标体脂率 (%，选填)
+  activityLevel: 1.2 | 1.375 | 1.55 | 1.725; // 日常静息活动乘数
+  updatedAt: string; // ISO 8601，用于多端合并
+  createdAt: string;
+}
+
+// --- 9. 运动消耗与骨骼肌负荷记录 (v2.1) ---
+export type ExerciseCategory =
+  | "post_meal_walk" // 餐后肌肉泵：散步/提踵/慢速骑行 (GLUT4 激活)
+  | "resistance" // 抗阻力量：扩大肌糖原池、长期提升胰岛素敏感度
+  | "cardio" // 中高强度有氧
+  | "other";
+
+export interface ExerciseLog {
+  id: string;
+  userId?: string; // 云同步用户标识（本地记录可缺省）
+  timestamp: string; // 运动开始时间 ISO 8601
+  category: ExerciseCategory;
+  durationMinutes: number;
+  caloriesBurned: number;
+  isPostMeal: boolean; // 是否紧邻餐后 30-45 分钟内
+  muscleFeel?: string[]; // 肌肉刺激体感标签
+  notes?: string;
+}
+
+// --- 10. 每日热量与代谢结算聚合 (v2.1) ---
+export interface DailyEnergyBalance {
+  date: string;
+  intakeCalories: number; // 饮食总摄入
+  bmr: number; // 基础代谢
+  tdee: number; // 静态维持 TDEE = BMR × 活动系数
+  activeBurnCalories: number; // 运动主动消耗
+  netBalance: number; // 净热量 = 摄入 - (TDEE + 运动消耗)，负值为赤字
+}
+
+// --- 11. 云同步配置 (v2.1，BYOK Cloudflare D1) ---
+export interface SyncSettings {
+  accountId: string; // Cloudflare Account ID
+  databaseId: string; // D1 Database ID
+  apiToken: string; // Cloudflare API Token
+  syncCode: string; // 同步码：多端一致的轻量用户标识
+}
+
 // --- 展示用标签映射 ---
 export const MEAL_TYPE_LABEL: Record<MealType, string> = {
   breakfast: "早餐",
@@ -94,4 +149,27 @@ export const SATIETY_DURATION_LABEL: Record<SatietyDuration, string> = {
   under_2h: "< 2 小时",
   "2_to_4h": "2 - 4 小时",
   over_4h: "> 4 小时",
+};
+
+export const EXERCISE_CATEGORY_LABEL: Record<ExerciseCategory, string> = {
+  post_meal_walk: "餐后肌肉泵",
+  resistance: "抗阻力量",
+  cardio: "中高强度有氧",
+  other: "其他",
+};
+
+export const EXERCISE_CATEGORY_DESC: Record<ExerciseCategory, string> = {
+  post_meal_walk: "散步 / 提踵 / 慢速骑行 · GLUT4 非胰岛素依赖转位",
+  resistance: "深蹲 / 核心 / 器械推拉 · 扩大肌糖原池",
+  cardio: "跑步 / 游泳 / 跳绳 · 提升心肺与代谢灵活性",
+  other: "瑜伽、徒步等日常活动",
+};
+
+/** 运动体感标签（多选） */
+export const MUSCLE_FEEL_OPTIONS = ["下肢酸胀", "核心紧绷", "上肢酸胀", "无疲劳感"] as const;
+
+export const GENDER_LABEL: Record<UserProfile["gender"], string> = {
+  male: "男",
+  female: "女",
+  other: "其他",
 };
