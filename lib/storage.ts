@@ -8,7 +8,6 @@ import type {
   AISettings,
   BodyCompositionRecord,
   MealLog,
-  SyncSettings,
   UserGoalConfig,
   ExerciseLog,
   UserProfile,
@@ -298,30 +297,6 @@ export const useAISettingsStore = create<AISettingsState>()(
     }),
     {
       name: "glucofit-ai-settings",
-      storage: createJSONStorage(() => obfuscatedStorage),
-    }
-  )
-);
-
-// ---------- 云同步设置 (v2.1，BYOK Cloudflare D1，混淆加密后仅存于本浏览器) ----------
-
-interface SyncSettingsState {
-  syncSettings: SyncSettings;
-  lastSyncAt: string | null;
-  updateSyncSettings: (settings: SyncSettings) => void;
-  setLastSyncAt: (iso: string) => void;
-}
-
-export const useSyncSettingsStore = create<SyncSettingsState>()(
-  persist(
-    (set) => ({
-      syncSettings: { accountId: "", databaseId: "", apiToken: "", syncCode: "" },
-      lastSyncAt: null,
-      updateSyncSettings: (syncSettings) => set({ syncSettings }),
-      setLastSyncAt: (lastSyncAt) => set({ lastSyncAt }),
-    }),
-    {
-      name: "glucofit-sync-settings",
       storage: createJSONStorage(() => obfuscatedStorage),
     }
   )

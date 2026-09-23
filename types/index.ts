@@ -76,11 +76,18 @@ export interface MealLogPrefill {
   sourceNote?: string;
 }
 
-// --- 8. 用户初始体态档案与代谢基准 (v2.1) ---
+// --- 8. 用户初始体态档案与代谢基准 (v2.2) ---
+
+/** 性别仅保留纯生理男女 (v2.2) */
+export type Gender = "male" | "female";
+
+/** 目标推荐方案 (v2.2)：保守稳健 / 中性推荐 / 激进塑形 */
+export type TargetStrategy = "conservative" | "moderate" | "aggressive";
+
 export interface UserProfile {
-  uid: string;
+  id: string;
   email?: string;
-  gender: "male" | "female" | "other";
+  gender: Gender;
   birthYear: number; // 出生年份
   heightCm: number; // 身高 (cm)
   initialWeightKg: number; // 初始空腹体重 (kg)
@@ -89,6 +96,7 @@ export interface UserProfile {
   initialProteinKg?: number; // 初始骨骼肌/蛋白质量 (kg，选填)
   targetWeightKg: number; // 目标体重 (kg)
   targetBodyFatRate?: number; // 目标体脂率 (%，选填)
+  strategy?: TargetStrategy; // 选定的目标梯度方案
   activityLevel: 1.2 | 1.375 | 1.55 | 1.725; // 日常静息活动乘数
   updatedAt: string; // ISO 8601，用于多端合并
   createdAt: string;
@@ -123,12 +131,28 @@ export interface DailyEnergyBalance {
   netBalance: number; // 净热量 = 摄入 - (TDEE + 运动消耗)，负值为赤字
 }
 
-// --- 11. 云同步配置 (v2.1，BYOK Cloudflare D1) ---
-export interface SyncSettings {
-  accountId: string; // Cloudflare Account ID
-  databaseId: string; // D1 Database ID
-  apiToken: string; // Cloudflare API Token
-  syncCode: string; // 同步码：多端一致的轻量用户标识
+// --- 11. 账户与云同步 (v2.2，中心化托管) ---
+
+/** 当前登录用户（由 /api/auth/* 下发） */
+export interface AuthUser {
+  id: string;
+  email: string;
+}
+
+/** AI 代谢诊断云端记录 (v2.2) */
+export interface AIDiagnosisRecord {
+  id: string;
+  userId: string;
+  content: string; // 诊断报告 JSON 字符串（DiagnosisResult 序列化）
+  generatedAt: string; // ISO 8601
+  dateStr: string; // YYYY-MM-DD
+}
+
+/** AI 代谢诊断本地缓存 (v2.2) */
+export interface CachedAIDiagnosis {
+  content: string; // 诊断报告 JSON 字符串
+  generatedAt: string; // ISO 时间戳 (如 2026-09-23T08:30:00Z)
+  dateStr: string; // YYYY-MM-DD
 }
 
 // --- 展示用标签映射 ---
@@ -168,8 +192,14 @@ export const EXERCISE_CATEGORY_DESC: Record<ExerciseCategory, string> = {
 /** 运动体感标签（多选） */
 export const MUSCLE_FEEL_OPTIONS = ["下肢酸胀", "核心紧绷", "上肢酸胀", "无疲劳感"] as const;
 
-export const GENDER_LABEL: Record<UserProfile["gender"], string> = {
+export const GENDER_LABEL: Record<Gender, string> = {
   male: "男",
   female: "女",
-  other: "其他",
+};
+
+/** 三档目标方案展示标签 (v2.2) */
+export const TARGET_STRATEGY_LABEL: Record<TargetStrategy, string> = {
+  conservative: "保守稳健型",
+  moderate: "中性推荐型",
+  aggressive: "激进塑形型",
 };

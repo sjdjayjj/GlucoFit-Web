@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Gauge, Loader2, Sparkles, Target } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,11 +19,25 @@ import {
   calcBmrMifflin,
   useProfileStore,
 } from "@/lib/profile";
-import { GENDER_LABEL } from "@/types";
-import type { UserProfile } from "@/types";
+import { calculateTargetOptions, type TargetOption } from "@/lib/target-calculator";
+import { GENDER_LABEL, TARGET_STRATEGY_LABEL } from "@/types";
+import type { Gender, UserProfile } from "@/types";
 import { cn } from "@/lib/utils";
 
 const CURRENT_YEAR = new Date().getFullYear();
+
+/** 三档卡片配色（保守 = 稳健绿 / 中性 = 推荐蓝 / 激进 = 进取紫） */
+const STRATEGY_CARD_CLASS: Record<TargetOption["type"], string> = {
+  conservative: "border-emerald-500 bg-emerald-50 text-emerald-700",
+  moderate: "border-sky-500 bg-sky-50 text-sky-700",
+  aggressive: "border-violet-500 bg-violet-50 text-violet-700",
+};
+
+const STRATEGY_TIP: Record<TargetOption["type"], string> = {
+  conservative: "适合轻度 IR / 初学者 / 节奏忙碌者",
+  moderate: "适合希望显著逆转内脏脂肪者",
+  aggressive: "适合有力量训练基础者",
+};
 
 export function OnboardingModal({
   open,
@@ -39,13 +53,14 @@ export function OnboardingModal({
   const saveProfile = useProfileStore((s) => s.saveProfile);
 
   const [form, setForm] = useState({
-    gender: "male" as UserProfile["gender"],
+    gender: "male" as Gender,
     birthYear: String(CURRENT_YEAR - 30),
     heightCm: "",
     initialWeightKg: "",
     initialBodyFatRate: "",
     targetWeightKg: String(goal.targetWeightKg || ""),
     targetBodyFatRate: goal.targetBodyFatRate ? String(goal.targetBodyFatRate) : "",
+    strategy: undefined as TargetOption["type"] | undefined,
     activityLevel: 1.375 as UserProfile["activityLevel"],
   });
   const [saving, setSaving] = useState(false);
@@ -68,11 +83,13 @@ export function OnboardingModal({
         targetBodyFatRate: profile.targetBodyFatRate
           ? String(profile.targetBodyFatRate)
           : "",
+        strategy: profile.strategy,
         activityLevel: profile.activityLevel,
       });
     } else {
       setForm((f) => ({
         ...f,
+        strategy: undefined,
         targetWeightKg: String(goal.targetWeightKg || ""),
         targetBodyFatRate: goal.targetBodyFatRate
           ? String(goal.targetBodyFatRate)
@@ -87,13 +104,36 @@ export function OnboardingModal({
   const heightM = Number(form.heightCm) / 100;
   const weight = Number(form.initialWeightKg);
 
+  /** 基础参数齐全时生成三档目标推荐 */
+  const targetOptions = useMemo(() => {
+    const birthYear = Number(form.birthYear);
+    if (
+      !heightM ||
+      !weight ||
+      !(birthYear >= 1900 && birthYear <= CURRENT_YEAR) ||
+      !(Number(form.heightCm) >= 100 && Number(form.heightCm) <= 250) ||
+      !(weight >= 25 && weight <= 300)
+    ) {
+      return [];
+    }
+    return calculateTargetOptions(form.gender, birthYear, Number(form.heightCm), weight);
+  }, [form.gender, form.birthYear, form.heightCm, weight, heightM]);
+
+  const applyTarget = (opt: TargetOption) => {
+    set({
+      targetWeightKg: String(opt.targetWeightKg),
+      targetBodyFatRate: String(opt.targetFatRate),
+      strategy: opt.type,
+    });
+  };
+
   /** 实时衍生指标：BMI / BMR / TDEE */
   const derived = useMemo(() => {
     if (!heightM || !weight) return null;
     const bmi = weight / (heightM * heightM);
     const fatRate = Number(form.initialBodyFatRate);
     const draft: UserProfile = {
-      uid: "preview",
+      id: "preview",
       gender: form.gender,
       birthYear: Number(form.birthYear) || CURRENT_YEAR - 30,
       heightCm: Number(form.heightCm),
@@ -147,7 +187,7 @@ export function OnboardingModal({
     const now = new Date().toISOString();
     const fatRate = Number(form.initialBodyFatRate);
     const profile: UserProfile = {
-      uid: crypto.randomUUID(),
+      id: crypto.randomUUID(),
       gender: form.gender,
       birthYear,
       heightCm: h,
@@ -157,6 +197,7 @@ export function OnboardingModal({
       targetBodyFatRate: form.targetBodyFatRate
         ? Number(form.targetBodyFatRate)
         : undefined,
+      strategy: form.strategy,
       activityLevel: form.activityLevel,
       updatedAt: now,
       createdAt: now,
@@ -181,8 +222,7 @@ export function OnboardingModal({
             {profile ? "编辑代谢初始档案" : "建立代谢初始档案"}
           </DialogTitle>
           <DialogDescription>
-            首次使用建议先建档：身高、初始体重与目标将作为 BMI、BMR/TDEE
-            与减重里程碑的统计学基准。全部数据仅保存在本地浏览器。
+            填写生理参数后，系统将按标准 BMI 与体脂率基准智能推荐三档目标梯度，一键选中即可。
           </DialogDescription>
         </DialogHeader>
 
@@ -191,7 +231,7 @@ export function OnboardingModal({
           <div className="space-y-1.5">
             <Label>性别 *</Label>
             <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
-              {(Object.keys(GENDER_LABEL) as Array<UserProfile["gender"]>).map((g) => (
+              {(Object.keys(GENDER_LABEL) as Gender[]).map((g) => (
                 <button
                   key={g}
                   type="button"
@@ -254,6 +294,56 @@ export function OnboardingModal({
                 onChange={(e) => set({ initialBodyFatRate: e.target.value })}
               />
             </div>
+          </div>
+
+          {/* 三档智能目标推荐 */}
+          {targetOptions.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5 text-primary" />
+                智能目标推荐（三选一，也可手动微调）
+              </Label>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {targetOptions.map((opt) => (
+                  <button
+                    key={opt.type}
+                    type="button"
+                    onClick={() => applyTarget(opt)}
+                    className={cn(
+                      "rounded-lg border p-3 text-left transition-colors",
+                      form.strategy === opt.type
+                        ? STRATEGY_CARD_CLASS[opt.type]
+                        : "border-input bg-card hover:bg-muted"
+                    )}
+                  >
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      {opt.label}
+                      {form.strategy === opt.type && (
+                        <Gauge className="h-3.5 w-3.5" />
+                      )}
+                    </div>
+                    <div className="mt-1.5 text-lg font-bold tabular-nums">
+                      {opt.targetWeightKg}
+                      <span className="ml-0.5 text-xs font-normal">kg</span>
+                      <span className="mx-1 text-muted-foreground">/</span>
+                      {opt.targetFatRate}
+                      <span className="ml-0.5 text-xs font-normal">%体脂</span>
+                    </div>
+                    <div className="mt-1 text-[10px] leading-snug opacity-80">
+                      {STRATEGY_TIP[opt.type]}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {form.strategy && (
+                <p className="text-[11px] text-muted-foreground">
+                  已选择「{TARGET_STRATEGY_LABEL[form.strategy]}」方案，可在下方微调具体数值。
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ob-target-weight">目标体重 (kg) *</Label>
               <Input

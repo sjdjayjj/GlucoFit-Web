@@ -5,7 +5,6 @@ import {
   Bone,
   Droplets,
   Dumbbell,
-  Plus,
   Scale,
   Star,
   TrendingDown,
@@ -13,7 +12,6 @@ import {
   Weight,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useGlucoFitStore, useSortedBodyRecords } from "@/lib/storage";
 import {
   analyzeComposition,
@@ -91,7 +89,7 @@ function DeltaChip({
   );
 }
 
-export function BodyMetricsCard({ onOpenRecord }: { onOpenRecord: () => void }) {
+export function BodyMetricsCard() {
   const records = useSortedBodyRecords();
   const mealLogs = useGlucoFitStore((s) => s.mealLogs);
 
@@ -112,13 +110,9 @@ export function BodyMetricsCard({ onOpenRecord }: { onOpenRecord: () => void }) 
           <CardDescription>
             {latest
               ? `BIA 体成分报告 · ${latest.date}${latest.notes ? ` · ${latest.notes}` : ""}`
-              : "暂无称重记录，请录入体脂秤数据"}
+              : "暂无称重记录，点击右下角「录体脂」开始追踪"}
           </CardDescription>
         </div>
-        <Button size="sm" onClick={onOpenRecord}>
-          <Plus className="h-4 w-4" />
-          录入数据
-        </Button>
       </CardHeader>
 
       <CardContent className="space-y-5">

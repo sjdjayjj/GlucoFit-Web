@@ -48,9 +48,7 @@ export const ACTIVITY_LEVEL_OPTIONS: Array<{
 export function calcBmrMifflin(profile: UserProfile, weightKg: number): number {
   const age = new Date().getFullYear() - profile.birthYear;
   const base = 10 * weightKg + 6.25 * profile.heightCm - 5 * age;
-  if (profile.gender === "male") return base + 5;
-  if (profile.gender === "female") return base - 161;
-  return base - 78;
+  return profile.gender === "male" ? base + 5 : base - 161;
 }
 
 export interface MetabolicBaseline {

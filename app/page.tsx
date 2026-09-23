@@ -3,35 +3,36 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  Bot,
   CalendarDays,
   CloudUpload,
-  Dumbbell,
   Loader2,
-  Plus,
-  Scale,
+  LogIn,
+  LogOut,
   Settings,
   UtensilsCrossed,
   X,
 } from "lucide-react";
+import { AIDiagnosisCard } from "@/components/AIDiagnosisCard";
+import { AuthModal } from "@/components/AuthModal";
 import { BodyMetricsCard } from "@/components/BodyMetricsCard";
 import { BodyCompositionDialog } from "@/components/BodyCompositionDialog";
 import { CompositionCharts } from "@/components/CompositionCharts";
 import { EnergyBalanceCard } from "@/components/EnergyBalanceCard";
 import { ExerciseLogDialog } from "@/components/ExerciseLogDialog";
 import { FastingTracker } from "@/components/FastingTracker";
+import { FloatingActionCapsule } from "@/components/FloatingActionCapsule";
 import { MealLogCard } from "@/components/MealLogCard";
 import { MealLogDialog } from "@/components/MealLogDialog";
 import { MealPlanner } from "@/components/MealPlanner";
 import { MilestoneBar } from "@/components/MilestoneBar";
 import { OnboardingModal } from "@/components/OnboardingModal";
-import { AIDiagnosisModal } from "@/components/AIDiagnosisModal";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useGlucoFitStore, useSyncSettingsStore } from "@/lib/storage";
+import { useGlucoFitStore } from "@/lib/storage";
 import { useProfileStore } from "@/lib/profile";
-import { isSyncConfigured, syncAll, useSyncRuntimeStore } from "@/lib/cloud";
+import { useAuthStore } from "@/lib/auth-store";
+import { syncAll, useSyncRuntimeStore, useSyncMetaStore } from "@/lib/cloud";
 import { fmtDate } from "@/lib/utils";
 import type { MealLogPrefill, MealRecommendation } from "@/types";
 
@@ -42,19 +43,24 @@ export default function Home() {
   const [mealPrefill, setMealPrefill] = useState<MealLogPrefill | null>(null);
   const [exerciseDialogOpen, setExerciseDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [diagnosisOpen, setDiagnosisOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
 
   const mealLogs = useGlucoFitStore((s) => s.mealLogs);
   const profile = useProfileStore((s) => s.profile);
   const onboardingDismissed = useProfileStore((s) => s.onboardingDismissed);
-  const syncSettings = useSyncSettingsStore((s) => s.syncSettings);
+  const user = useAuthStore((s) => s.user);
+  const checking = useAuthStore((s) => s.checking);
+  const refreshAuth = useAuthStore((s) => s.refresh);
+  const signOut = useAuthStore((s) => s.signOut);
   const syncing = useSyncRuntimeStore((s) => s.syncing);
+  const lastSyncAt = useSyncMetaStore((s) => s.lastSyncAt);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    void refreshAuth();
+  }, [refreshAuth]);
 
   // 首访 Onboarding：无档案且未跳过时自动弹出
   useEffect(() => {
@@ -63,7 +69,7 @@ export default function Home() {
     }
   }, [mounted, profile, onboardingDismissed]);
 
-  // 同步结果轻提示
+  // 轻提示自动消失
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), 4000);
@@ -118,21 +124,25 @@ export default function Home() {
     });
   };
 
+  const showToast = (ok: boolean, message: string) => setToast({ ok, message });
+
   const handleSync = async () => {
-    if (!isSyncConfigured(syncSettings)) {
-      setSettingsOpen(true);
-      setToast({ ok: false, message: "请先在设置中配置云端同步" });
+    if (!user) {
+      setAuthOpen(true);
+      showToast(false, "请先登录后同步数据");
       return;
     }
     try {
       await syncAll();
-      setToast({ ok: true, message: "云端同步完成" });
+      showToast(true, "云端同步完成");
     } catch (e) {
-      setToast({
-        ok: false,
-        message: e instanceof Error ? e.message : "同步失败",
-      });
+      showToast(false, e instanceof Error ? e.message : "同步失败");
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    showToast(true, "已退出登录，当前数据保留在本机");
   };
 
   return (
@@ -146,7 +156,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-base font-bold leading-tight">GlucoFit</h1>
-              <p className="text-[11px] text-muted-foreground">控糖与代谢改善系统 · v2.1</p>
+              <p className="text-[11px] text-muted-foreground">控糖与代谢改善系统 · v2.2</p>
             </div>
           </div>
 
@@ -156,34 +166,24 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setDiagnosisOpen(true)}>
-              <Bot className="h-4 w-4" />
-              <span className="hidden md:inline">AI 代谢分析</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setBodyDialogOpen(true)}>
-              <Scale className="h-4 w-4" />
-              <span className="hidden sm:inline">体脂秤录入</span>
-            </Button>
-            <Button size="sm" onClick={() => openMealDialog()}>
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">记录饮食</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setExerciseDialogOpen(true)}>
-              <Dumbbell className="h-4 w-4" />
-              <span className="hidden sm:inline">记运动</span>
-            </Button>
+            {/* 云同步：未登录引导注册，已登录手动同步 */}
             <Button
-              variant="ghost"
-              size="icon"
-              title="云端同步"
+              variant="outline"
+              size="sm"
               onClick={handleSync}
               disabled={syncing}
+              title={
+                lastSyncAt
+                  ? `上次同步 ${new Date(lastSyncAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                  : "同步数据至云端"
+              }
             >
               {syncing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <CloudUpload className="h-4 w-4" />
               )}
+              <span className="hidden md:inline">同步</span>
             </Button>
             <Button
               variant="ghost"
@@ -193,79 +193,99 @@ export default function Home() {
             >
               <Settings className="h-4 w-4" />
             </Button>
+
+            {/* 账户状态 */}
+            {user ? (
+              <div className="flex items-center gap-1 rounded-full border bg-muted/40 py-1 pl-3 pr-1">
+                <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={user.email}>
+                  {user.email}
+                </span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" title="退出登录" onClick={handleSignOut}>
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" onClick={() => setAuthOpen(true)} disabled={checking}>
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">登录 / 注册</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* 仪表盘 */}
+      {/* 仪表盘：移动端单列，md+ 双列网格 */}
       <main className="mx-auto max-w-7xl p-4 md:p-6">
-        <div className="grid gap-5 xl:grid-cols-3">
-          {/* 减重里程碑条（建档后常驻顶部） */}
-          {profile && (
-            <div className="xl:col-span-3">
-              <MilestoneBar />
-            </div>
-          )}
+        {/* 减重里程碑条（建档后常驻顶部） */}
+        {profile && (
+          <div className="mb-5">
+            <MilestoneBar />
+          </div>
+        )}
 
-          <div className="xl:col-span-2">
-            <BodyMetricsCard onOpenRecord={() => setBodyDialogOpen(true)} />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* 左列：代谢监控与即时状态 */}
+          <div className="flex flex-col gap-6">
+            <FastingTracker />
+            <EnergyBalanceCard />
+
+            {/* 今日饮食记录卡片流 */}
+            <Card className="flex flex-col">
+              <CardHeader className="flex-row items-start justify-between space-y-0">
+                <div className="space-y-1.5">
+                  <CardTitle className="flex items-center gap-2">
+                    <UtensilsCrossed className="h-5 w-5 text-primary" />
+                    今日餐食稳糖追踪
+                  </CardTitle>
+                  <CardDescription>
+                    {todayMeals.length > 0
+                      ? `${todayMeals.length} 次进食 · 平均稳糖分 ${avgScore} 分`
+                      : "今日尚无打卡记录"}
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-1 flex-col gap-3">
+                {todayMeals.length === 0 ? (
+                  <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-10 text-center">
+                    <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      点击右下角「记饮食」打卡，支持拍照识别与语音快记
+                    </p>
+                  </div>
+                ) : (
+                  todayMeals.map((log) => <MealLogCard key={log.id} log={log} />)
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          <FastingTracker />
-
-          <div className="xl:col-span-2">
+          {/* 右列：体征趋势与智能分析 */}
+          <div className="flex flex-col gap-6">
+            <BodyMetricsCard />
+            <AIDiagnosisCard />
             <CompositionCharts />
           </div>
+        </div>
 
-          {/* 今日餐食稳糖追踪流 */}
-          <Card className="flex flex-col">
-            <CardHeader className="flex-row items-start justify-between space-y-0">
-              <div className="space-y-1.5">
-                <CardTitle className="flex items-center gap-2">
-                  <UtensilsCrossed className="h-5 w-5 text-primary" />
-                  今日餐食稳糖追踪
-                </CardTitle>
-                <CardDescription>
-                  {todayMeals.length > 0
-                    ? `${todayMeals.length} 次进食 · 平均稳糖分 ${avgScore} 分`
-                    : "今日尚无打卡记录"}
-                </CardDescription>
-              </div>
-              <Button size="sm" onClick={() => openMealDialog()}>
-                <Plus className="h-4 w-4" />
-                打卡
-              </Button>
-            </CardHeader>
-            <CardContent className="flex flex-1 flex-col gap-3">
-              {todayMeals.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-10 text-center">
-                  <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    拍照记录第一餐，AI 自动估算热量与宏量
-                  </p>
-                </div>
-              ) : (
-                todayMeals.map((log) => <MealLogCard key={log.id} log={log} />)
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 今日热量收支环 + 当日运动记录 */}
-          <EnergyBalanceCard />
-
-          {/* 热量预算 + AI 控糖三餐推荐 */}
-          <div className="xl:col-span-2">
-            <MealPlanner
-              onAdopt={handleAdoptRecommendation}
-              onOpenSettings={() => setSettingsOpen(true)}
-            />
-          </div>
+        {/* 热量预算 + AI 控糖三餐推荐（全宽） */}
+        <div className="mt-6">
+          <MealPlanner
+            onAdopt={handleAdoptRecommendation}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           控糖理念：进食顺序 蔬菜 → 蛋白脂肪 → 慢碳 · 餐后 30 分钟内激活肌肉泵（散步 / 提踵）· 热量赤字 300-500 kcal · 关注脂肪量下降与蛋白质量维持
         </p>
       </main>
+
+      {/* 右下角常驻悬浮胶囊动作条 */}
+      <FloatingActionCapsule
+        onOpenMeal={() => openMealDialog()}
+        onOpenExercise={() => setExerciseDialogOpen(true)}
+        onOpenBody={() => setBodyDialogOpen(true)}
+      />
 
       {/* 同步结果轻提示 */}
       {toast && (
@@ -300,8 +320,9 @@ export default function Home() {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         onOpenOnboarding={() => setOnboardingOpen(true)}
+        onOpenAuth={() => setAuthOpen(true)}
       />
-      <AIDiagnosisModal open={diagnosisOpen} onOpenChange={setDiagnosisOpen} />
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
     </div>
   );

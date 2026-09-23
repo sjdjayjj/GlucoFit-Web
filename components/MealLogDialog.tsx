@@ -39,6 +39,7 @@ import { computeMealScore, getScoreTone, SCORE_TONE_CLASS } from "@/lib/scoring"
 import { useAISettingsStore, useGlucoFitStore } from "@/lib/storage";
 import { analyzeMealPhoto } from "@/lib/ai-client";
 import { downscaleImageFile } from "@/lib/image";
+import { MealVoiceInput, type VoiceMealParse } from "@/components/MealVoiceInput";
 import { cn, uid } from "@/lib/utils";
 
 const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string; icon: React.ComponentType<{ className?: string }> }> = [
@@ -185,6 +186,23 @@ export function MealLogDialog({
     }
   };
 
+  /** 语音解析结果自动预填表单 */
+  const applyVoiceParse = (r: VoiceMealParse) => {
+    setMealType(r.mealType);
+    setFoodSummary(r.foodSummary);
+    setFollowedSequence(r.followedSequence);
+    setAvoidedRefinedCarb(r.avoidedRefinedCarb);
+    setPostMealActivity(r.postMealActivity);
+    setEnergyReaction(r.energyReaction);
+    setNutrition((n) => ({
+      calories: r.calories || n?.calories || 0,
+      carbsG: r.carbsG || n?.carbsG || 0,
+      proteinG: r.proteinG || n?.proteinG || 0,
+      fatG: r.fatG || n?.fatG || 0,
+      fiberG: n?.fiberG ?? 0,
+    }));
+  };
+
   const score = computeMealScore({
     followedSequence,
     avoidedRefinedCarb,
@@ -299,6 +317,9 @@ export function MealLogDialog({
               </span>
             </div>
           )}
+
+          {/* 语音快记：口语一句话 → AI 预填表单 */}
+          <MealVoiceInput onParsed={applyVoiceParse} />
 
           {/* 用餐时段 */}
           <div className="space-y-1.5">
