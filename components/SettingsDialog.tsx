@@ -3,15 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   BadgeCheck,
-  CloudUpload,
   Eye,
   EyeOff,
   KeyRound,
   Loader2,
-  LogIn,
-  LogOut,
   Settings,
-  UserRound,
 } from "lucide-react";
 import {
   Dialog,
@@ -26,9 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAISettingsStore } from "@/lib/storage";
 import { useProfileStore } from "@/lib/profile";
-import { useAuthStore } from "@/lib/auth-store";
 import { testConnection } from "@/lib/ai-client";
-import { syncAll, useSyncMetaStore, useSyncRuntimeStore } from "@/lib/cloud";
 import type { AISettings } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -58,12 +52,10 @@ export function SettingsDialog({
   open,
   onOpenChange,
   onOpenOnboarding,
-  onOpenAuth,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenOnboarding?: () => void;
-  onOpenAuth?: () => void;
 }) {
   // ---------- AI 模型设置 ----------
   const saved = useAISettingsStore((s) => s.aiSettings);
@@ -72,16 +64,9 @@ export function SettingsDialog({
   // ---------- 代谢档案 ----------
   const profile = useProfileStore((s) => s.profile);
 
-  // ---------- 账户与云同步 ----------
-  const user = useAuthStore((s) => s.user);
-  const signOut = useAuthStore((s) => s.signOut);
-  const lastSyncAt = useSyncMetaStore((s) => s.lastSyncAt);
-  const syncing = useSyncRuntimeStore((s) => s.syncing);
-
   const [form, setForm] = useState<AISettings>(saved);
   const [showKey, setShowKey] = useState(false);
   const [aiTest, setAiTest] = useState<AsyncState>(IDLE_ASYNC);
-  const [syncState, setSyncState] = useState<AsyncState>(IDLE_ASYNC);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,7 +74,6 @@ export function SettingsDialog({
       setForm(saved);
       setShowKey(false);
       setAiTest(IDLE_ASYNC);
-      setSyncState(IDLE_ASYNC);
       setError(null);
     }
   }, [open, saved]);
@@ -126,21 +110,6 @@ export function SettingsDialog({
     onOpenChange(false);
   };
 
-  const handleSyncNow = async () => {
-    setSyncState({ loading: true, ok: null, message: null });
-    try {
-      await syncAll();
-      setSyncState({ loading: false, ok: true, message: "双向同步完成" });
-    } catch (e) {
-      setSyncState({ loading: false, ok: false, message: e instanceof Error ? e.message : "同步失败" });
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    setSyncState({ loading: false, ok: true, message: "已退出登录，数据保留在本机" });
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -155,66 +124,7 @@ export function SettingsDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* ============ 账户与云同步 ============ */}
-          <section className="space-y-3">
-            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <UserRound className="h-4 w-4 text-sky-600" />
-              账户与云同步
-            </h3>
-
-            {user ? (
-              <>
-                <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{user.email}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {lastSyncAt
-                        ? `上次同步 ${new Date(lastSyncAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
-                        : "尚未同步过"}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <Button variant="outline" size="sm" onClick={handleSyncNow} disabled={syncing}>
-                      {syncing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CloudUpload className="h-4 w-4" />
-                      )}
-                      立即同步
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                      <LogOut className="h-3.5 w-3.5" />
-                      退出
-                    </Button>
-                  </div>
-                </div>
-                <AsyncMessage state={syncState} />
-              </>
-            ) : (
-              <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-                <span className="text-xs text-muted-foreground">
-                  当前为游客模式（数据仅存本机）。登录后可多端漫游与自动备份。
-                </span>
-                {onOpenAuth && (
-                  <Button
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => {
-                      onOpenChange(false);
-                      onOpenAuth();
-                    }}
-                  >
-                    <LogIn className="h-4 w-4" />
-                    登录 / 注册
-                  </Button>
-                )}
-              </div>
-            )}
-          </section>
-
-          <div className="border-t" />
-
-          {/* ============ 代谢档案 ============ */}
+          {/* ============ 代谢初始档案 ============ */}
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-foreground">代谢初始档案</h3>
             <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">

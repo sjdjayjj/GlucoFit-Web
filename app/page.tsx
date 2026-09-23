@@ -127,11 +127,6 @@ export default function Home() {
   const showToast = (ok: boolean, message: string) => setToast({ ok, message });
 
   const handleSync = async () => {
-    if (!user) {
-      setAuthOpen(true);
-      showToast(false, "请先登录后同步数据");
-      return;
-    }
     try {
       await syncAll();
       showToast(true, "云端同步完成");
@@ -166,25 +161,27 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* 云同步：未登录引导注册，已登录手动同步 */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSync}
-              disabled={syncing}
-              title={
-                lastSyncAt
-                  ? `上次同步 ${new Date(lastSyncAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
-                  : "同步数据至云端"
-              }
-            >
-              {syncing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CloudUpload className="h-4 w-4" />
-              )}
-              <span className="hidden md:inline">同步</span>
-            </Button>
+            {/* 云同步：仅登录后显示（游客数据仅存本机，无同步语义） */}
+            {user && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSync}
+                disabled={syncing}
+                title={
+                  lastSyncAt
+                    ? `上次同步 ${new Date(lastSyncAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                    : "同步数据至云端"
+                }
+              >
+                {syncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CloudUpload className="h-4 w-4" />
+                )}
+                <span className="hidden md:inline">同步</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -257,6 +254,12 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
+
+            {/* 热量预算 + AI 控糖三餐推荐（紧随餐食记录的使用动线） */}
+            <MealPlanner
+              onAdopt={handleAdoptRecommendation}
+              onOpenSettings={() => setSettingsOpen(true)}
+            />
           </div>
 
           {/* 右列：体征趋势与智能分析 */}
@@ -265,14 +268,6 @@ export default function Home() {
             <AIDiagnosisCard />
             <CompositionCharts />
           </div>
-        </div>
-
-        {/* 热量预算 + AI 控糖三餐推荐（全宽） */}
-        <div className="mt-6">
-          <MealPlanner
-            onAdopt={handleAdoptRecommendation}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
@@ -320,7 +315,6 @@ export default function Home() {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         onOpenOnboarding={() => setOnboardingOpen(true)}
-        onOpenAuth={() => setAuthOpen(true)}
       />
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
