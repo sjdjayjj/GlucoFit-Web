@@ -4,25 +4,26 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    /* v3.0 Classic Blue（#0F4C81）主题：理性、静谧与高代谢自控力 */
+    --background: 210 45% 97%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 161 94% 30%;
+    --primary: 208 79% 28%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 94%;
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 94%;
     --muted-foreground: 215 16% 47%;
-    --accent: 199 89% 94%;
-    --accent-foreground: 201 96% 32%;
+    --accent: 208 60% 94%;
+    --accent-foreground: 208 79% 28%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 161 94% 30%;
+    --ring: 208 79% 28%;
     --radius: 0.75rem;
   }
 }
@@ -34,4 +35,24 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* v3.0 SOS 呼吸节律动画：吸气 4s → 呼气 6s（10s 循环） */
+@keyframes breathe {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  60% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 10s ease-in-out infinite;
 }

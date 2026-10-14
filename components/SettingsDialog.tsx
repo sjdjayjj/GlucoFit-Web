@@ -17,13 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAISettingsStore } from "@/lib/storage";
+import { useAISettingsStore, useGlucoFitStore } from "@/lib/storage";
 import { useProfileStore } from "@/lib/profile";
 import { testConnection } from "@/lib/ai-client";
 import type { AISettings } from "@/types";
+import type { WeeklyScheduleConfig } from "@/types/v3";
 import { cn } from "@/lib/utils";
 
 /** 常用 OpenAI 兼容服务商预设 */
@@ -64,6 +66,18 @@ export function SettingsDialog({
   // ---------- 代谢档案 ----------
   const profile = useProfileStore((s) => s.profile);
 
+  // ---------- v3.0 工作日/周末双模引擎 ----------
+  const savedSchedule = useGlucoFitStore((s) => s.weeklySchedule);
+  const setWeeklySchedule = useGlucoFitStore((s) => s.setWeeklySchedule);
+  const [scheduleForm, setScheduleForm] = useState<WeeklyScheduleConfig>(
+    savedSchedule ?? {
+      enabled: false,
+      weekdayProtocol: "16:8",
+      weekendProtocol: "12:12",
+      carbFistLimitPerMeal: 1,
+    }
+  );
+
   const [form, setForm] = useState<AISettings>(saved);
   const [showKey, setShowKey] = useState(false);
   const [aiTest, setAiTest] = useState<AsyncState>(IDLE_ASYNC);
@@ -72,11 +86,20 @@ export function SettingsDialog({
   useEffect(() => {
     if (open) {
       setForm(saved);
+      setScheduleForm(
+        savedSchedule ?? {
+          enabled: false,
+          weekdayProtocol: "16:8",
+          weekendProtocol: "12:12",
+          carbFistLimitPerMeal: 1,
+        }
+      );
       setShowKey(false);
       setAiTest(IDLE_ASYNC);
       setError(null);
     }
-  }, [open, saved]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const set = (partial: Partial<AISettings>) =>
     setForm((f) => ({ ...f, ...partial }));
@@ -107,6 +130,12 @@ export function SettingsDialog({
       model: form.model.trim(),
       visionModel: form.visionModel.trim(),
     });
+    // v3.0：同步保存周期双模配置
+    setWeeklySchedule(
+      scheduleForm.enabled
+        ? scheduleForm
+        : null
+    );
     onOpenChange(false);
   };
 
@@ -147,6 +176,66 @@ export function SettingsDialog({
                 </Button>
               )}
             </div>
+          </section>
+
+          <div className="border-t" />
+
+          {/* ============ v3.0 工作日/周末双模引擎 ============ */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-foreground">周期双模引擎</h3>
+              <Switch
+                checked={scheduleForm.enabled}
+                onCheckedChange={(v) => setScheduleForm((s) => ({ ...s, enabled: v }))}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              开启后工作日（周一至五）执行严格断食自动驾驶，周末/社交日自动切换为防御与平衡模式。
+            </p>
+            {scheduleForm.enabled && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>工作日协议（严格）</Label>
+                  <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+                    {(["16:8", "18:6"] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setScheduleForm((s) => ({ ...s, weekdayProtocol: p }))}
+                        className={cn(
+                          "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          scheduleForm.weekdayProtocol === p
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>周末协议（弹性）</Label>
+                  <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+                    {(["14:10", "12:12", "flexible"] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setScheduleForm((s) => ({ ...s, weekendProtocol: p }))}
+                        className={cn(
+                          "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          scheduleForm.weekendProtocol === p
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {p === "flexible" ? "弹性" : p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           <div className="border-t" />
@@ -253,7 +342,7 @@ export function SettingsDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={handleSaveAI}>保存 AI 设置</Button>
+          <Button onClick={handleSaveAI}>保存设置</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

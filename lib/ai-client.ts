@@ -3,6 +3,7 @@ import type {
   MealRecommendation,
   UserGoalConfig,
 } from "@/types";
+import type { PreMealPlanResult } from "@/types/v3";
 
 // ---------- OpenAI 兼容协议客户端 ----------
 
@@ -254,6 +255,60 @@ export async function generateMealPlan(
     throw new Error("AI 未返回有效的食谱方案，请重试");
   }
   return recs.slice(0, 3);
+}
+
+// ---------- v3.0 吃前排雷与进食剧本生成器 ----------
+
+const PRE_MEAL_RADAR_PROMPT = `你是一位专注胰岛素抵抗干预的控糖营养专家。用户即将在餐厅/外卖进餐，请根据用户提供的菜单文字或食物照片，以纯 JSON 输出（不得包含 Markdown 标记）"吃前排雷分析 + 10 秒进食战术剧本"：
+{"safeFoods": string[], "hiddenThreats": string[], "insulinBombs": string[], "script": string[], "stapleFist": number, "stapleGrams": number}
+字段要求：
+- safeFoods：稳糖安全区食材（优质蛋白、十字花科/绿叶蔬菜、豆制品等），3-5 项，每项附一句吃法提示
+- hiddenThreats：隐藏刺客（糖醋、勾芡浓汤、隐形糖沙拉酱、红烧汁等），逐项说明为什么危险
+- insulinBombs：胰岛素炸弹（白米饭、面条、含糖饮料、甜点等精制碳水），逐项给出替代或限量建议
+- script：2-3 步进食顺序战术剧本，每步一句话，要求具体到"先吃什么、吃多少、什么动作"，并包含餐后 25-30 分钟的行动指令（站立/散步/提踵）
+- stapleFist：主食建议拳头数（0.5-1.5，一般 1）
+- stapleGrams：对应主食克重（约 50-150g）`;
+
+export interface PreMealPlanInput {
+  menuText?: string;
+  imageDataUrl?: string;
+}
+
+export async function planMealScript(
+  settings: AISettings,
+  input: PreMealPlanInput
+): Promise<PreMealPlanResult> {
+  const useVision = !!input.imageDataUrl && !!settings.visionModel;
+  const userContent: string | ContentPart[] = useVision
+    ? [
+        {
+          type: "text",
+          text: `这是我这顿饭的${input.menuText ? "照片与菜单：" + input.menuText : "照片或菜单"}，请生成吃前排雷分析与进食战术剧本。`,
+        },
+        { type: "image_url", image_url: { url: input.imageDataUrl as string } },
+      ]
+    : `我要吃这一餐：${input.menuText ?? "（未提供菜单）"}。请生成吃前排雷分析与进食战术剧本。`;
+
+  const raw = await chatCompletion(
+    settings,
+    [
+      { role: "system", content: PRE_MEAL_RADAR_PROMPT },
+      { role: "user", content: userContent },
+    ],
+    { model: useVision ? settings.visionModel : settings.model, temperature: 0.3 }
+  );
+  const parsed = extractJson<Partial<PreMealPlanResult>>(raw);
+  if (!parsed || (!parsed.safeFoods?.length && !parsed.script?.length)) {
+    throw new Error("AI 未返回有效的排雷方案，请重试或补充菜单信息");
+  }
+  return {
+    safeFoods: parsed.safeFoods ?? [],
+    hiddenThreats: parsed.hiddenThreats ?? [],
+    insulinBombs: parsed.insulinBombs ?? [],
+    script: parsed.script ?? [],
+    stapleFist: typeof parsed.stapleFist === "number" ? parsed.stapleFist : 1,
+    stapleGrams: typeof parsed.stapleGrams === "number" ? parsed.stapleGrams : 100,
+  };
 }
 
 // ---------- AI 周度代谢诊断 ----------

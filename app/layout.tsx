@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GlucoFit 控糖与代谢改善系统",
+  title: "GlucoFit 代谢自动驾驶 · Metabolic Autopilot v3.0",
   description:
-    "面向胰岛素抵抗与超重人群的代谢管理系统：体脂秤体成分精细追踪 + 控糖饮食行为打卡",
+    "面向胰岛素抵抗与超重人群的代谢数字孪生系统：虚拟血糖/胰岛素潮汐推演、吃前排雷、水合解耦降噪与周期双模断食引擎",
 };
 
 export default function RootLayout({

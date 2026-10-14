@@ -1,22 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, Dumbbell, Scale, UtensilsCrossed } from "lucide-react";
+import { ArrowUp, Dumbbell, Scale, UtensilsCrossed, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Smartisan 风格右下角常驻悬浮胶囊动作条 (v2.2)：
+ * Smartisan 风格右下角常驻悬浮胶囊动作条 (v3.0)：
  * 全面胶囊圆角 + 毛玻璃质感浅灰白渐变底 + 优雅阴影。
- * 集成【记饮食】【记运动】【录体脂】主动作与【回到顶部】。
+ * 集成【记饮食】【记运动】【录体脂】【嘴馋急救 SOS】与【回到顶部】。
  */
 export function FloatingActionCapsule({
   onOpenMeal,
   onOpenExercise,
   onOpenBody,
+  onOpenSos,
 }: {
   onOpenMeal: () => void;
   onOpenExercise: () => void;
   onOpenBody: () => void;
+  onOpenSos: () => void;
 }) {
   const [showTop, setShowTop] = useState(false);
 
@@ -37,6 +39,17 @@ export function FloatingActionCapsule({
         "fixed bottom-6 right-6 z-50 flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/90 p-1.5 shadow-2xl backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/90"
       )}
     >
+      {/* v3.0 嘴馋急救 SOS：深夜/下午突发暴食冲动的多巴胺阻断入口 */}
+      <button
+        type="button"
+        onClick={onOpenSos}
+        title="嘴馋急救 SOS"
+        aria-label="嘴馋急救 SOS"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/90 text-amber-950 shadow-sm transition-all hover:scale-110 hover:bg-amber-300 active:scale-95"
+      >
+        <Zap className="h-4 w-4 fill-current" />
+      </button>
+
       <CapsuleButton
         label="记饮食"
         onClick={onOpenMeal}

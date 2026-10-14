@@ -40,6 +40,7 @@ import { useAISettingsStore, useGlucoFitStore } from "@/lib/storage";
 import { analyzeMealPhoto } from "@/lib/ai-client";
 import { downscaleImageFile } from "@/lib/image";
 import { MealVoiceInput, type VoiceMealParse } from "@/components/MealVoiceInput";
+import { PreMealRadar } from "@/components/PreMealRadar";
 import { cn, uid } from "@/lib/utils";
 
 const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string; icon: React.ComponentType<{ className?: string }> }> = [
@@ -118,6 +119,9 @@ export function MealLogDialog({
   const aiSettings = useAISettingsStore((s) => s.aiSettings);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // v3.0：吃前规划（排雷） / 餐后打卡 双模式
+  const [mode, setMode] = useState<"plan" | "log">("log");
+
   const [mealType, setMealType] = useState<MealType>("lunch");
   const [followedSequence, setFollowedSequence] = useState(true);
   const [avoidedRefinedCarb, setAvoidedRefinedCarb] = useState(true);
@@ -133,6 +137,7 @@ export function MealLogDialog({
 
   useEffect(() => {
     if (open) {
+      setMode("log");
       setMealType(prefill?.mealType ?? guessMealType());
       setFollowedSequence(true);
       setAvoidedRefinedCarb(true);
@@ -236,10 +241,37 @@ export function MealLogDialog({
         <DialogHeader>
           <DialogTitle>控糖饮食打卡</DialogTitle>
           <DialogDescription>
-            拍照识别热量宏量，记录进食行为与餐后代谢反应
+            吃前排雷规划，或拍照识别热量宏量记录进食行为与餐后反应
           </DialogDescription>
         </DialogHeader>
 
+        {/* v3.0 模式切换：吃前排雷 / 餐后打卡 */}
+        <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+          {(
+            [
+              { key: "plan", label: "吃前规划 · 排雷" },
+              { key: "log", label: "餐后打卡" },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setMode(t.key)}
+              className={cn(
+                "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                mode === t.key
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {mode === "plan" ? (
+          <PreMealRadar />
+        ) : (
         <div className="space-y-4">
           {/* 餐食照片 + AI 识别 */}
           <div className="space-y-2">
@@ -468,7 +500,9 @@ export function MealLogDialog({
             </div>
           </div>
         </div>
+        )}
 
+        {mode === "log" && (
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
@@ -478,6 +512,7 @@ export function MealLogDialog({
             完成打卡
           </Button>
         </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

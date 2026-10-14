@@ -12,6 +12,7 @@ import type {
   ExerciseLog,
   UserProfile,
 } from "@/types";
+import type { WeeklyScheduleConfig } from "@/types/v3";
 import { computeMealScore } from "@/lib/scoring";
 import { daysAgoDateStr, uid } from "@/lib/utils";
 
@@ -144,13 +145,17 @@ interface GlucoFitState {
   eatingWindowStartHour: number;
   /** TDEE 活动系数 */
   activityFactor: number;
+  /** v3.0 工作日/周末双模引擎（null = 关闭，回退单一协议） */
+  weeklySchedule: WeeklyScheduleConfig | null;
   addBodyRecord: (record: BodyCompositionRecord) => void;
   addMealLog: (log: MealLog) => void;
+  updateMealLog: (id: string, partial: Partial<MealLog>) => void;
   addExerciseLog: (log: ExerciseLog) => void;
   deleteExerciseLog: (id: string) => void;
   updateGoal: (partial: Partial<UserGoalConfig>) => void;
   setEatingWindowStartHour: (hour: number) => void;
   setActivityFactor: (factor: number) => void;
+  setWeeklySchedule: (schedule: WeeklyScheduleConfig | null) => void;
   /** 云同步合并：按 id 去重、时间新者胜，返回合并数量 */
   mergeCloudData: (cloud: {
     bodyRecords?: BodyCompositionRecord[];
@@ -168,6 +173,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       goal: { targetWeightKg: 70, targetBodyFatRate: 18, fastingProtocol: "16:8" },
       eatingWindowStartHour: 10,
       activityFactor: 1.375,
+      weeklySchedule: null,
       addBodyRecord: (record) =>
         set((s) => ({
           bodyRecords: [...s.bodyRecords, record].sort((a, b) =>
@@ -179,6 +185,12 @@ export const useGlucoFitStore = create<GlucoFitState>()(
           mealLogs: [...s.mealLogs, log].sort((a, b) =>
             a.timestamp.localeCompare(b.timestamp)
           ),
+        })),
+      updateMealLog: (id, partial) =>
+        set((s) => ({
+          mealLogs: s.mealLogs
+            .map((l) => (l.id === id ? { ...l, ...partial } : l))
+            .sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
         })),
       addExerciseLog: (log) =>
         set((s) => ({
@@ -193,6 +205,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       setEatingWindowStartHour: (hour) =>
         set({ eatingWindowStartHour: hour }),
       setActivityFactor: (factor) => set({ activityFactor: factor }),
+      setWeeklySchedule: (weeklySchedule) => set({ weeklySchedule }),
       mergeCloudData: ({ bodyRecords, mealLogs, exerciseLogs }) =>
         set((s) => {
           const next: Partial<GlucoFitState> = {};

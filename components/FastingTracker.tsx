@@ -1,21 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Timer, Utensils, Waves } from "lucide-react";
+import { CalendarRange, Timer, Utensils, Waves } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGlucoFitStore } from "@/lib/storage";
 import { cn } from "@/lib/utils";
-import type { UserGoalConfig } from "@/types";
+import {
+  effectiveFastingProtocol,
+  PROTOCOL_LABEL,
+  PROTOCOL_WINDOW_HOURS,
+} from "@/lib/metabolic-sim";
 
-const PROTOCOL_OPTIONS: UserGoalConfig["fastingProtocol"][] = ["16:8", "14:10", "12:12"];
+const PROTOCOL_OPTIONS = ["16:8", "14:10", "12:12"] as const;
 const START_HOUR_OPTIONS = [8, 9, 10, 11, 12];
-
-/** 各断食模式对应的进食窗口时长（小时） */
-const WINDOW_HOURS: Record<UserGoalConfig["fastingProtocol"], number> = {
-  "16:8": 8,
-  "14:10": 10,
-  "12:12": 12,
-};
 
 const RING_RADIUS = 56;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -33,6 +30,7 @@ function fmtClock(hour: number): string {
 
 export function FastingTracker() {
   const goal = useGlucoFitStore((s) => s.goal);
+  const weeklySchedule = useGlucoFitStore((s) => s.weeklySchedule);
   const startHour = useGlucoFitStore((s) => s.eatingWindowStartHour);
   const updateGoal = useGlucoFitStore((s) => s.updateGoal);
   const setStartHour = useGlucoFitStore((s) => s.setEatingWindowStartHour);
@@ -44,8 +42,14 @@ export function FastingTracker() {
     return () => clearInterval(timer);
   }, []);
 
+  // v3.0 双模引擎：工作日严格 / 周末弹性自动切换（关闭时回退手动协议）
+  const { protocol, isWeekendMode } = useMemo(
+    () => effectiveFastingProtocol(weeklySchedule, now, goal.fastingProtocol),
+    [weeklySchedule, now, goal.fastingProtocol]
+  );
+  const windowHours = PROTOCOL_WINDOW_HOURS[protocol];
+
   const phase = useMemo(() => {
-    const windowHours = WINDOW_HOURS[goal.fastingProtocol];
     const todayStart = new Date(now);
     todayStart.setHours(startHour, 0, 0, 0);
     const todayEnd = new Date(todayStart.getTime() + windowHours * 3600_000);
@@ -57,7 +61,6 @@ export function FastingTracker() {
         progress: (now.getTime() - todayStart.getTime()) / (windowHours * 3600_000),
         remaining: todayEnd.getTime() - now.getTime(),
         windowLabel: `${fmtClock(startHour)} — ${fmtClock((startHour + windowHours) % 24)}`,
-        windowHours,
       };
     }
     // 断食期（低胰岛素消脂维护期）
@@ -68,9 +71,8 @@ export function FastingTracker() {
       progress: (now.getTime() - fastStart.getTime()) / (fastEnd.getTime() - fastStart.getTime()),
       remaining: fastEnd.getTime() - now.getTime(),
       windowLabel: `${fmtClock(startHour)} — ${fmtClock((startHour + windowHours) % 24)}`,
-      windowHours,
     };
-  }, [now, startHour, goal.fastingProtocol]);
+  }, [now, startHour, windowHours]);
 
   const progress = Math.min(1, Math.max(0, phase.progress));
   const strokeColor = phase.eating ? "#10b981" : "#0ea5e9";
@@ -83,7 +85,22 @@ export function FastingTracker() {
             <Timer className="h-5 w-5 text-primary" />
             断食进度
           </CardTitle>
-          <CardDescription>{goal.fastingProtocol} 间歇断食</CardDescription>
+          <CardDescription className="flex items-center gap-1.5">
+            {PROTOCOL_LABEL[protocol]} 间歇断食
+            {weeklySchedule?.enabled && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                  isWeekendMode
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-primary/20 bg-primary/5 text-primary"
+                )}
+              >
+                <CalendarRange className="h-3 w-3" />
+                {isWeekendMode ? "周末防御模式" : "工作日自动驾驶"}
+              </span>
+            )}
+          </CardDescription>
         </div>
       </CardHeader>
 
@@ -130,28 +147,36 @@ export function FastingTracker() {
 
         <p className="text-center text-xs text-muted-foreground">
           今日进食窗口 <span className="font-medium text-foreground">{phase.windowLabel}</span>
-          ，断食 {24 - phase.windowHours} 小时有助胰岛素基线回落
+          ，断食 {24 - windowHours} 小时有助胰岛素基线回落
         </p>
 
         {/* 模式与窗口时间设置 */}
         <div className="w-full space-y-2">
-          <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
-            {PROTOCOL_OPTIONS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => updateGoal({ fastingProtocol: p })}
-                className={cn(
-                  "flex-1 rounded-md px-1 py-1.5 text-xs font-medium transition-colors",
-                  goal.fastingProtocol === p
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+          {weeklySchedule?.enabled ? (
+            <div className="rounded-lg border border-dashed bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+              双模引擎已开启：工作日 <span className="font-medium text-foreground">{weeklySchedule.weekdayProtocol}</span>
+              {" · "}周末 <span className="font-medium text-foreground">{weeklySchedule.weekendProtocol === "flexible" ? "弹性" : weeklySchedule.weekendProtocol}</span>
+              ，当前自动切换为 <span className="font-medium text-primary">{PROTOCOL_LABEL[protocol]}</span>
+            </div>
+          ) : (
+            <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+              {PROTOCOL_OPTIONS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => updateGoal({ fastingProtocol: p })}
+                  className={cn(
+                    "flex-1 rounded-md px-1 py-1.5 text-xs font-medium transition-colors",
+                    goal.fastingProtocol === p
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
             {START_HOUR_OPTIONS.map((h) => (
               <button

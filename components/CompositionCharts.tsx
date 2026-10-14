@@ -13,8 +13,9 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart } from "lucide-react";
+import { LineChart, Droplets } from "lucide-react";
 import { useSortedBodyRecords } from "@/lib/storage";
+import { analyzeHydration, VERDICT_STYLE } from "@/lib/bodyCompAnalyzer";
 import { cn, daysAgoDateStr, shortDate } from "@/lib/utils";
 
 type RangeDays = 7 | 30;
@@ -27,6 +28,9 @@ const RANGE_OPTIONS: Array<{ value: RangeDays; label: string }> = [
 export function CompositionCharts() {
   const records = useSortedBodyRecords();
   const [range, setRange] = useState<RangeDays>(7);
+
+  // v3.0 水合解耦：剥离水分噪音，解读最近一次体重波动
+  const hydration = useMemo(() => analyzeHydration(records), [records]);
 
   const data = useMemo(() => {
     const cutoff = daysAgoDateStr(range - 1);
@@ -77,6 +81,37 @@ export function CompositionCharts() {
           </div>
         ) : (
           <>
+            {/* v3.0 水合解耦诊断胶囊 */}
+            {hydration && (
+              <div
+                className={cn(
+                  "flex items-start gap-2.5 rounded-lg border p-3 text-xs",
+                  VERDICT_STYLE[hydration.verdict].className
+                )}
+              >
+                <Droplets className="mt-0.5 h-4 w-4 shrink-0" />
+                <div className="space-y-0.5">
+                  <div className="font-semibold">
+                    {VERDICT_STYLE[hydration.verdict].icon}{" "}
+                    {VERDICT_STYLE[hydration.verdict].label}
+                    <span className="ml-2 font-normal opacity-80">
+                      账面 {hydration.rawWeightDelta > 0 ? "+" : ""}
+                      {hydration.rawWeightDelta.toFixed(1)} kg
+                      {hydration.waterWeightDelta != null && (
+                        <>
+                          {" · "}水分 {hydration.waterWeightDelta > 0 ? "+" : ""}
+                          {hydration.waterWeightDelta.toFixed(1)} kg
+                        </>
+                      )}
+                      {" · "}真实脂肪 {hydration.trueFatDelta > 0 ? "+" : ""}
+                      {hydration.trueFatDelta.toFixed(1)} kg
+                    </span>
+                  </div>
+                  <div className="leading-relaxed opacity-90">{hydration.explanation}</div>
+                </div>
+              </div>
+            )}
+
             {/* 图表 1：体重 + 体脂率 双轴 */}
             <div>
               <div className="mb-2 text-sm font-medium">体重 (kg) 与 体脂率 (%) 走势</div>

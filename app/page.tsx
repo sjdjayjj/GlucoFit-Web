@@ -17,6 +17,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { BodyMetricsCard } from "@/components/BodyMetricsCard";
 import { BodyCompositionDialog } from "@/components/BodyCompositionDialog";
 import { CompositionCharts } from "@/components/CompositionCharts";
+import { CravingSosDialog } from "@/components/CravingSosDialog";
 import { EnergyBalanceCard } from "@/components/EnergyBalanceCard";
 import { ExerciseLogDialog } from "@/components/ExerciseLogDialog";
 import { FastingTracker } from "@/components/FastingTracker";
@@ -27,6 +28,7 @@ import { MealPlanner } from "@/components/MealPlanner";
 import { MilestoneBar } from "@/components/MilestoneBar";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { SettingsDialog } from "@/components/SettingsDialog";
+import { VirtualMetabolicWave } from "@/components/VirtualMetabolicWave";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGlucoFitStore } from "@/lib/storage";
@@ -45,6 +47,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [sosOpen, setSosOpen] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
 
   const mealLogs = useGlucoFitStore((s) => s.mealLogs);
@@ -151,7 +154,9 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-base font-bold leading-tight">GlucoFit</h1>
-              <p className="text-[11px] text-muted-foreground">控糖与代谢改善系统 · v2.2</p>
+              <p className="text-[11px] text-muted-foreground">
+                代谢自动驾驶 · Metabolic Autopilot v3.0
+              </p>
             </div>
           </div>
 
@@ -220,6 +225,11 @@ export default function Home() {
           </div>
         )}
 
+        {/* v3.0 核心：虚拟血糖/胰岛素潮汐引擎（代谢数字孪生） */}
+        <div className="mb-6">
+          <VirtualMetabolicWave />
+        </div>
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* 左列：代谢监控与即时状态 */}
           <div className="flex flex-col gap-6">
@@ -280,6 +290,7 @@ export default function Home() {
         onOpenMeal={() => openMealDialog()}
         onOpenExercise={() => setExerciseDialogOpen(true)}
         onOpenBody={() => setBodyDialogOpen(true)}
+        onOpenSos={() => setSosOpen(true)}
       />
 
       {/* 同步结果轻提示 */}
@@ -311,6 +322,7 @@ export default function Home() {
         prefill={mealPrefill}
       />
       <ExerciseLogDialog open={exerciseDialogOpen} onOpenChange={setExerciseDialogOpen} />
+      <CravingSosDialog open={sosOpen} onOpenChange={setSosOpen} />
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
