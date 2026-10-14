@@ -74,8 +74,8 @@ export function VirtualMetabolicWave() {
       minutes: p.minutes,
       glucosePast: p.isProjected ? null : p.glucose,
       glucoseFuture: p.isProjected ? p.glucose : null,
-      insulinPast: p.isProjected ? null : p.insulin,
-      insulinFuture: p.isProjected ? p.insulin : null,
+      insulinPast: p.isProjected ? null : p.insulinLoad,
+      insulinFuture: p.isProjected ? p.insulinLoad : null,
       level: p.glucoseLevel,
       projected: p.isProjected,
     }));

@@ -20,7 +20,6 @@ export const CRASH_THRESHOLD = 78;
 export interface MetabolicSimPoint extends VirtualCurvePoint {
   minutes: number; // 距 00:00 的分钟数
   glucose: number; // mg/dL
-  insulin: number; // 0-100
 }
 
 interface MealResponseParams {
@@ -128,7 +127,7 @@ export function simulateMetabolicCurve(
       minutes,
       time: fmtMinutes(minutes),
       glucose: Math.round(glucose * 10) / 10,
-      insulin: insulinLoad,
+      insulinLoad,
       glucoseLevel: classify(glucose),
       isProjected: minutes > nowMinutes,
     });
