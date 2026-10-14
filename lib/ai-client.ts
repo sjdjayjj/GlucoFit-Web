@@ -48,6 +48,7 @@ async function chatCompletion(
       model: opts?.model || settings.model,
       messages,
       temperature: opts?.temperature,
+      deepThinking: settings.deepThinking === true,
     }),
   });
   const data = (await res.json().catch(() => null)) as {

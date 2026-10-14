@@ -323,6 +323,21 @@ export function SettingsDialog({
               </div>
             </div>
 
+            <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="ai-deep-thinking">深度思考模式</Label>
+                <p className="text-xs text-muted-foreground">
+                  开启后请求携带 enable_thinking 参数（Qwen3 / SiliconFlow
+                  等支持的推理模型生效），响应更慢但推理更深，默认关闭
+                </p>
+              </div>
+              <Switch
+                id="ai-deep-thinking"
+                checked={form.deepThinking === true}
+                onCheckedChange={(v) => set({ deepThinking: v })}
+              />
+            </div>
+
             <div className="rounded-lg border bg-muted/40 p-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-muted-foreground">一键 Ping 验证 API 可用性</span>

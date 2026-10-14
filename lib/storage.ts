@@ -305,7 +305,7 @@ interface AISettingsState {
 export const useAISettingsStore = create<AISettingsState>()(
   persist(
     (set) => ({
-      aiSettings: { baseUrl: "", apiKey: "", model: "", visionModel: "" },
+      aiSettings: { baseUrl: "", apiKey: "", model: "", visionModel: "", deepThinking: false },
       updateAISettings: (aiSettings) => set({ aiSettings }),
     }),
     {

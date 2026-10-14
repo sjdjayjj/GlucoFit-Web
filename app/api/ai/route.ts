@@ -8,7 +8,7 @@ import { upstreamFetchJson } from "@/lib/upstream-fetch";
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
-    const { baseUrl, apiKey, model, messages, temperature, maxTokens } =
+    const { baseUrl, apiKey, model, messages, temperature, maxTokens, deepThinking } =
       body ?? {};
     if (!baseUrl || !apiKey || !model || !Array.isArray(messages)) {
       return Response.json(
@@ -25,6 +25,8 @@ export async function POST(req: Request) {
       messages,
       temperature,
       max_tokens: maxTokens,
+      // 仅在用户开启深度思考时附加，避免不支持的供应商拒绝未知参数
+      ...(deepThinking === true ? { enable_thinking: true } : {}),
     });
 
     const res = await upstreamFetchJson(url, {

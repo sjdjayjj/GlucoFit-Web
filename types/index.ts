@@ -4,6 +4,7 @@ export interface AISettings {
   apiKey: string;
   model: string; // 例如: gpt-4o-mini, deepseek-chat, qwen-plus 等
   visionModel: string; // 支持视觉的多模态模型 (如 gpt-4o, qwen-vl-max 等)
+  deepThinking?: boolean; // 深度思考开关：true 时请求携带 enable_thinking（默认关闭）
 }
 
 // --- 2. 宏量营养与热量结构 ---
