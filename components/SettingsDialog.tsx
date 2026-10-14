@@ -34,12 +34,25 @@ const PROVIDER_PRESETS: Array<{
   baseUrl: string;
   model: string;
   visionModel: string;
+  textModels?: string[]; // 可选的文本模型候选（渲染为 datalist 供下拉选择）
 }> = [
   { label: "OpenAI", baseUrl: "https://api.openai.com/v1", model: "gpt-4o-mini", visionModel: "gpt-4o-mini" },
   { label: "DeepSeek", baseUrl: "https://api.deepseek.com/v1", model: "deepseek-chat", visionModel: "" },
   { label: "通义千问 (百炼)", baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus", visionModel: "qwen-vl-max" },
   { label: "月之暗面 Kimi", baseUrl: "https://api.moonshot.cn/v1", model: "moonshot-v1-8k", visionModel: "moonshot-v1-8k-vision" },
   { label: "硅基流动", baseUrl: "https://api.siliconflow.cn/v1", model: "deepseek-ai/DeepSeek-V3", visionModel: "Qwen/Qwen2.5-VL-72B-Instruct" },
+  {
+    label: "Google Gemini",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    model: "gemini-3.8-flash",
+    visionModel: "gemini-3.8-flash",
+    textModels: [
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+    ],
+  },
 ];
 
 interface AsyncState {
@@ -308,6 +321,7 @@ export function SettingsDialog({
                 <Input
                   id="ai-model"
                   placeholder="gpt-4o-mini / deepseek-chat"
+                  list="ai-model-options"
                   value={form.model}
                   onChange={(e) => set({ model: e.target.value })}
                 />
@@ -317,11 +331,20 @@ export function SettingsDialog({
                 <Input
                   id="ai-vision-model"
                   placeholder="gpt-4o / qwen-vl-max"
+                  list="ai-model-options"
                   value={form.visionModel}
                   onChange={(e) => set({ visionModel: e.target.value })}
                 />
               </div>
             </div>
+
+            <datalist id="ai-model-options">
+              {PROVIDER_PRESETS.find((p) => p.baseUrl === form.baseUrl)?.textModels?.map(
+                (m) => (
+                  <option key={m} value={m} />
+                )
+              )}
+            </datalist>
 
             <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
               <div className="space-y-0.5">
