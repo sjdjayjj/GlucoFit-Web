@@ -91,15 +91,24 @@ export function AuthModal({
     try {
       if (mode === "login") {
         await signIn(email.trim(), password);
+        setSubmitting(false);
+        // 登录即双向同步：拉取云端档案与记录（新设备建档），并合并本地离线数据上行。
+        // 同步失败时保留弹窗提示，可手动关闭后稍后通过顶栏同步按钮重试。
+        try {
+          await syncAll();
+          finish();
+        } catch {
+          setError("登录成功，但云端同步失败：请检查网络后点击顶栏同步按钮重试");
+        }
       } else {
         await signUp(email.trim(), password);
-      }
-      setSubmitting(false);
-      // 登录成功 → 引导离线数据迁移
-      if (hasLocalData()) {
-        setStep("migrate");
-      } else {
-        finish();
+        setSubmitting(false);
+        // 新注册账号云端为空，仅在有本地离线数据时引导合并上行
+        if (hasLocalData()) {
+          setStep("migrate");
+        } else {
+          finish();
+        }
       }
     } catch (e) {
       setSubmitting(false);

@@ -62,15 +62,22 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    void refreshAuth();
+    void (async () => {
+      await refreshAuth();
+      // 已有会话但本机无档案（如新设备曾登录但未完成同步）：静默拉取云端建档
+      const { user: u } = useAuthStore.getState();
+      if (u && !useProfileStore.getState().profile) {
+        syncAll().catch(() => null);
+      }
+    })();
   }, [refreshAuth]);
 
-  // 首访 Onboarding：无档案且未跳过时自动弹出
+  // 首访 Onboarding：无档案且未跳过时自动弹出（已登录用户档案应来自云端同步，不弹）
   useEffect(() => {
-    if (mounted && !profile && !onboardingDismissed) {
+    if (mounted && !user && !profile && !onboardingDismissed) {
       setOnboardingOpen(true);
     }
-  }, [mounted, profile, onboardingDismissed]);
+  }, [mounted, user, profile, onboardingDismissed]);
 
   // 轻提示自动消失
   useEffect(() => {
