@@ -349,7 +349,7 @@ async function encryptSecret(plain: string): Promise<string> {
   bytes.set(iv);
   bytes.set(new Uint8Array(ct), iv.length);
   let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return `v1:${btoa(bin)}`;
 }
 
