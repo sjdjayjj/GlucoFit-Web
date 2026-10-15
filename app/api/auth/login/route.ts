@@ -4,10 +4,18 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { d1Query, ensureSchema } from "@/lib/db";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 /** 用户登录：校验邮箱密码，签发 HttpOnly 会话 Cookie */
 export async function POST(req: Request) {
   try {
+    // 每 IP 5 分钟内最多 10 次尝试，防暴力撞库
+    if (!rateLimit(`login:${clientIp(req)}`, 10, 5 * 60_000)) {
+      return Response.json(
+        { error: "尝试次数过多，请 5 分钟后再试" },
+        { status: 429 }
+      );
+    }
     const body = (await req.json().catch(() => null)) as {
       email?: string;
       password?: string;

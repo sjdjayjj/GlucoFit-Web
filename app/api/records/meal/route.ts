@@ -71,7 +71,7 @@ export async function POST(req: Request) {
   }
 }
 
-/** DELETE 批量删除（同步端 tombstone）：body = { ids: string[] } */
+/** DELETE 批量删除（同步端 tombstone）：body = { ids: string[] }，按 90 个一组分块规避 D1 参数上限 */
 export async function DELETE(req: Request) {
   const auth = await requireSession(req);
   if ("error" in auth) return auth.error;
@@ -84,13 +84,18 @@ export async function DELETE(req: Request) {
     if (!ids.length) {
       return Response.json({ error: "缺少 ids" }, { status: 400 });
     }
-    const placeholders = ids.map(() => "?").join(", ");
-    await execStatements([
-      {
-        sql: `DELETE FROM meal_logs WHERE user_id = ? AND id IN (${placeholders})`,
-        params: [auth.userId, ...ids],
-      },
-    ]);
+    const CHUNK = 90; // D1 单语句绑定参数上限 100
+    const statements = [];
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      statements.push({
+        sql: `DELETE FROM meal_logs WHERE user_id = ? AND id IN (${slice
+          .map(() => "?")
+          .join(", ")})`,
+        params: [auth.userId, ...slice],
+      });
+    }
+    await execStatements(statements);
     return Response.json({ ok: true, count: ids.length });
   } catch (e) {
     return Response.json(

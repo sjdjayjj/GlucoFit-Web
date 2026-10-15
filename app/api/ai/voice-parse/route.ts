@@ -1,4 +1,4 @@
-import { upstreamFetchJson } from "@/lib/upstream-fetch";
+import { assertSafeUpstreamUrl, upstreamFetchJson } from "@/lib/upstream-fetch";
 import { extractJson } from "@/lib/ai-client";
 
 /**
@@ -48,6 +48,11 @@ export async function POST(req: Request) {
 
     let url = String(body.baseUrl).replace(/\/+$/, "");
     if (!/\/chat\/completions$/.test(url)) url += "/chat/completions";
+    try {
+      assertSafeUpstreamUrl(url);
+    } catch (e) {
+      return Response.json({ error: (e as Error).message }, { status: 400 });
+    }
 
     const res = await upstreamFetchJson(url, {
       method: "POST",

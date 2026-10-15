@@ -73,12 +73,13 @@ export default function Home() {
     })();
   }, [refreshAuth]);
 
-  // 首访 Onboarding：无档案且未跳过时自动弹出（已登录用户档案应来自云端同步，不弹）
+  // 首访 Onboarding：无档案且未跳过时自动弹出（已登录用户档案应来自云端同步，不弹）。
+  // 等会话探测完成（!checking）再判断，避免已登录用户在 /me 返回前闪现弹窗
   useEffect(() => {
-    if (mounted && !user && !profile && !onboardingDismissed) {
+    if (mounted && !checking && !user && !profile && !onboardingDismissed) {
       setOnboardingOpen(true);
     }
-  }, [mounted, user, profile, onboardingDismissed]);
+  }, [mounted, checking, user, profile, onboardingDismissed]);
 
   // 轻提示自动消失
   useEffect(() => {
@@ -169,6 +170,8 @@ export default function Home() {
   };
 
   const handleSignOut = async () => {
+    // 清空同步元信息：确保下次登录（可能切换账号）执行一次全量上行
+    useSyncMetaStore.getState().resetLastSyncAt();
     await signOut();
     showToast(true, "已退出登录，当前数据保留在本机");
   };

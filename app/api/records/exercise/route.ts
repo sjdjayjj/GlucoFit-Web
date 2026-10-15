@@ -65,3 +65,37 @@ export async function POST(req: Request) {
     );
   }
 }
+
+/** DELETE 批量删除（同步端 tombstone）：body = { ids: string[] }，按 90 个一组分块规避 D1 参数上限 */
+export async function DELETE(req: Request) {
+  const auth = await requireSession(req);
+  if ("error" in auth) return auth.error;
+  try {
+    await ensureSchema();
+    const body = (await req.json().catch(() => null)) as { ids?: unknown } | null;
+    const ids = Array.isArray(body?.ids)
+      ? body.ids.filter((x): x is string => typeof x === "string" && x.length > 0)
+      : [];
+    if (!ids.length) {
+      return Response.json({ error: "缺少 ids" }, { status: 400 });
+    }
+    const CHUNK = 90; // D1 单语句绑定参数上限 100
+    const statements = [];
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      statements.push({
+        sql: `DELETE FROM exercise_logs WHERE user_id = ? AND id IN (${slice
+          .map(() => "?")
+          .join(", ")})`,
+        params: [auth.userId, ...slice],
+      });
+    }
+    await execStatements(statements);
+    return Response.json({ ok: true, count: ids.length });
+  } catch (e) {
+    return Response.json(
+      { error: (e as Error).message || "删除运动记录失败" },
+      { status: 500 }
+    );
+  }
+}

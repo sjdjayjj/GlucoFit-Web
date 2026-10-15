@@ -53,10 +53,13 @@ export function VirtualMetabolicWave() {
   }, []);
 
   const todayMeals = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 跨午夜补齐：昨晚 21:00 后的餐仍在代谢窗口内（餐后 2-3h 有反应尾部），
+    // 否则凌晨时段曲线会突然失去昨晚深夜餐的贡献
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setHours(cutoff.getHours() - 3);
     return mealLogs
-      .filter((l) => new Date(l.timestamp) >= today)
+      .filter((l) => new Date(l.timestamp) >= cutoff)
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   }, [mealLogs]);
 

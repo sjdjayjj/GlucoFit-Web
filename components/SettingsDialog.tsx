@@ -95,6 +95,7 @@ export function SettingsDialog({
   const [form, setForm] = useState<AISettings>(saved);
   const [showKey, setShowKey] = useState(false);
   const [aiTest, setAiTest] = useState<AsyncState>(IDLE_ASYNC);
+  const [savingAI, setSavingAI] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -132,7 +133,7 @@ export function SettingsDialog({
     });
   };
 
-  const handleSaveAI = () => {
+  const handleSaveAI = async () => {
     if (!form.baseUrl.trim() || !form.apiKey.trim() || !form.model.trim()) {
       setError("Base URL、API Key 与模型名为必填项");
       return;
@@ -146,14 +147,34 @@ export function SettingsDialog({
       deepThinking: form.deepThinking === true,
       updatedAt: new Date().toISOString(),
     };
+    // 先落本地（未登录也即时生效），云端保存失败时保留弹窗提示
     updateAISettings(next);
     // 已登录时同步上行至云端档案（按用户隔离，API Key 服务端加密落库）
     if (useAuthStore.getState().user) {
-      void fetch("/api/ai-settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(next),
-      }).catch(() => null);
+      setSavingAI(true);
+      try {
+        const res = await fetch("/api/ai-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(next),
+        });
+        const data = (await res.json().catch(() => null)) as
+          | { updatedAt?: string; error?: string }
+          | null;
+        if (!res.ok) {
+          setError(data?.error || "AI 配置已保存到本机，但云端保存失败，可稍后点击顶栏同步重试");
+          return;
+        }
+        // 以服务端返回的 updatedAt 收敛本地，避免下次同步误判新旧
+        if (data?.updatedAt) {
+          updateAISettings({ ...next, updatedAt: data.updatedAt });
+        }
+      } catch {
+        setError("AI 配置已保存到本机，但云端保存失败，请检查网络后重试");
+        return;
+      } finally {
+        setSavingAI(false);
+      }
     }
     // v3.0：同步保存周期双模配置
     setWeeklySchedule(
@@ -392,7 +413,10 @@ export function SettingsDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={handleSaveAI}>保存设置</Button>
+          <Button onClick={handleSaveAI} disabled={savingAI}>
+            {savingAI && <Loader2 className="h-4 w-4 animate-spin" />}
+            保存设置
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

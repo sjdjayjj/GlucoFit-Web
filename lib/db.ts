@@ -149,8 +149,10 @@ const SCHEMA_STATEMENTS = [
 
 let schemaReady: Promise<void> | null = null;
 
-/** 幂等初始化表结构（ALTER 失败视为列已存在，忽略） */
+/** 幂等初始化表结构（ALTER 失败视为列已存在，忽略）。
+ *  生产表结构稳定后可设 DB_SKIP_SCHEMA_INIT=1 跳过，省去 serverless 冷启动的建表开销。 */
 export function ensureSchema(): Promise<void> {
+  if (process.env.DB_SKIP_SCHEMA_INIT === "1") return Promise.resolve();
   if (!schemaReady) {
     schemaReady = (async () => {
       for (const sql of SCHEMA_STATEMENTS) {
@@ -325,10 +327,17 @@ const subtle = webcrypto.subtle;
 /** 加密密钥：优先 AI_SETTINGS_SECRET，缺省回退 D1 凭证派生（零配置可用） */
 async function getSecretKey(): Promise<CryptoKey> {
   const secret =
-    process.env.AI_SETTINGS_SECRET ||
-    process.env.CLOUDFLARE_API_TOKEN ||
-    "glucofit-ai-settings-fallback";
-  const raw = await subtle.digest("SHA-256", textEnc.encode(secret));
+    process.env.AI_SETTINGS_SECRET || process.env.CLOUDFLARE_API_TOKEN;
+  if (!secret) {
+    console.warn(
+      "[db] AI_SETTINGS_SECRET 与 CLOUDFLARE_API_TOKEN 均未配置，" +
+        "AI Key 加密回退到内置默认密钥（仅具混淆意义），生产环境请配置 AI_SETTINGS_SECRET"
+    );
+  }
+  const raw = await subtle.digest(
+    "SHA-256",
+    textEnc.encode(secret || "glucofit-ai-settings-fallback")
+  );
   return subtle.importKey("raw", raw, "AES-GCM", false, [
     "encrypt",
     "decrypt",
@@ -411,9 +420,13 @@ export async function loadAISettings(userId: string): Promise<AISettings | null>
     typeof raw?.ai_settings === "string" ? raw.ai_settings : null
   );
   if (!row) return null;
+  const apiKey = await decryptSecret(row.apiKeyEnc);
+  // 密文存在但解密失败（如服务端加密密钥轮换）：视为云端配置不可用，
+  // 返回 null 让同步走本地，避免空 Key 的残缺配置覆盖正常设置
+  if (row.apiKeyEnc && !apiKey) return null;
   return {
     baseUrl: row.baseUrl,
-    apiKey: await decryptSecret(row.apiKeyEnc),
+    apiKey,
     model: row.model,
     visionModel: row.visionModel,
     deepThinking: row.deepThinking,

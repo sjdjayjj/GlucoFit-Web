@@ -147,7 +147,8 @@ export function sessionCookieHeader(token: string): string {
 }
 
 export function clearSessionCookieHeader(): string {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax;${secure} Max-Age=0`;
 }
 
 /** 从请求中解析并校验会话，未登录返回 null */

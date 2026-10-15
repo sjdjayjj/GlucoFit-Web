@@ -1,4 +1,4 @@
-import { upstreamFetchJson } from "@/lib/upstream-fetch";
+import { assertSafeUpstreamUrl, upstreamFetchJson } from "@/lib/upstream-fetch";
 
 /**
  * AI 请求代理：由前端转发用户配置的 OpenAI 兼容接口，
@@ -19,6 +19,11 @@ export async function POST(req: Request) {
 
     let url = String(baseUrl).replace(/\/+$/, "");
     if (!/\/chat\/completions$/.test(url)) url += "/chat/completions";
+    try {
+      assertSafeUpstreamUrl(url);
+    } catch (e) {
+      return Response.json({ error: (e as Error).message }, { status: 400 });
+    }
 
     const payload = JSON.stringify({
       model,

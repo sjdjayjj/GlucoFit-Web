@@ -26,6 +26,8 @@ import { useAuthStore } from "@/lib/auth-store";
 interface SyncMetaState {
   lastSyncAt: string | null;
   setLastSyncAt: (iso: string) => void;
+  /** 登出时清空，确保下次登录执行一次全量上行 */
+  resetLastSyncAt: () => void;
 }
 
 export const useSyncMetaStore = create<SyncMetaState>()(
@@ -33,6 +35,7 @@ export const useSyncMetaStore = create<SyncMetaState>()(
     (set) => ({
       lastSyncAt: null,
       setLastSyncAt: (lastSyncAt) => set({ lastSyncAt }),
+      resetLastSyncAt: () => set({ lastSyncAt: null }),
     }),
     { name: "glucofit-sync-meta" }
   )
@@ -184,20 +187,31 @@ export async function syncAll(): Promise<void> {
       exerciseLogs,
     });
 
-    // 4. 推送合并后的全量数据（剥离图片字段，云端 image_url 留空）
+    // 4. 推送合并后的数据（剥离图片字段，云端 image_url 留空）。
+    //    首次同步（无 lastSyncAt）全量上行；之后仅增量上行本机修改过的记录，节省 D1 配额
     const state = useGlucoFitStore.getState();
     const latestProfile = useProfileStore.getState().profile;
+    const fullPush = !useSyncMetaStore.getState().lastSyncAt;
+    const pickDirty = <T extends { id: string }>(all: T[], dirty: string[]): T[] =>
+      fullPush ? all : all.filter((r) => (dirty ?? []).includes(r.id));
     await Promise.all([
       latestProfile ? pushProfile(latestProfile) : Promise.resolve(),
       pushRecords(
         "body",
-        state.bodyRecords.map(({ imageUrl: _img, ...r }) => r)
+        pickDirty(state.bodyRecords, state.dirtyBodyIds ?? []).map(
+          ({ imageUrl: _img, ...r }) => r
+        )
       ),
       pushRecords(
         "meal",
-        state.mealLogs.map(({ imageUrl: _img, ...l }) => l)
+        pickDirty(state.mealLogs, state.dirtyMealIds ?? []).map(
+          ({ imageUrl: _img, ...l }) => l
+        )
       ),
-      pushRecords("exercise", state.exerciseLogs),
+      pushRecords(
+        "exercise",
+        pickDirty(state.exerciseLogs, state.dirtyExerciseIds ?? [])
+      ),
     ]);
 
     // 4.5 本地 AI 配置较新时上行，并将云端 updatedAt 写回本地
@@ -210,7 +224,7 @@ export async function syncAll(): Promise<void> {
       }
     }
 
-    // 5. 云端删除本机已移除的餐记录（tombstone），成功后清空待删清单；
+    // 5. 云端删除本机已移除的记录（tombstone，餐记录与运动记录），成功后清空待删清单；
     //    失败则保留清单，下次同步重试
     const { pendingDeletedMealIds, clearPendingDeletedMealIds } =
       useGlucoFitStore.getState();
@@ -222,7 +236,19 @@ export async function syncAll(): Promise<void> {
       });
       if (delRes.ok) clearPendingDeletedMealIds();
     }
+    const { pendingDeletedExerciseIds, clearPendingDeletedExerciseIds } =
+      useGlucoFitStore.getState();
+    if (pendingDeletedExerciseIds?.length) {
+      const delRes = await fetch("/api/records/exercise", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: pendingDeletedExerciseIds }),
+      });
+      if (delRes.ok) clearPendingDeletedExerciseIds();
+    }
 
+    // 6. 全部推送成功后清空增量标记
+    useGlucoFitStore.getState().clearDirtyIds();
     useSyncMetaStore.getState().setLastSyncAt(new Date().toISOString());
     runtime.setSyncing(false);
   } catch (e) {

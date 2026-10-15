@@ -4,10 +4,18 @@ import {
   signSession,
 } from "@/lib/auth";
 import { d1Query, ensureSchema } from "@/lib/db";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 /** 用户注册：邮箱 + 密码，成功后签发 HttpOnly 会话 Cookie */
 export async function POST(req: Request) {
   try {
+    // 每 IP 5 分钟内最多 5 次注册，防批量灌号
+    if (!rateLimit(`register:${clientIp(req)}`, 5, 5 * 60_000)) {
+      return Response.json(
+        { error: "注册过于频繁，请 5 分钟后再试" },
+        { status: 429 }
+      );
+    }
     const body = (await req.json().catch(() => null)) as {
       email?: string;
       password?: string;

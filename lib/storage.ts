@@ -176,6 +176,10 @@ function stripDemoState(s: {
 
 // ---------- Store ----------
 
+/** 标记记录为待上行（去重） */
+const markDirty = (ids: string[] | undefined, id: string): string[] =>
+  (ids ?? []).includes(id) ? ids ?? [] : [...(ids ?? []), id];
+
 interface GlucoFitState {
   bodyRecords: BodyCompositionRecord[];
   mealLogs: MealLog[];
@@ -196,6 +200,14 @@ interface GlucoFitState {
   clearPendingDeletedMealIds: () => void;
   addExerciseLog: (log: ExerciseLog) => void;
   deleteExerciseLog: (id: string) => void;
+  /** 本机已删除、待云端同步删除的运动记录 id（tombstone，云端删除成功后清空） */
+  pendingDeletedExerciseIds: string[];
+  clearPendingDeletedExerciseIds: () => void;
+  /** 本机新增/修改、待增量上行的记录 id（云端合并采纳后清除） */
+  dirtyBodyIds: string[];
+  dirtyMealIds: string[];
+  dirtyExerciseIds: string[];
+  clearDirtyIds: () => void;
   updateGoal: (partial: Partial<UserGoalConfig>) => void;
   setEatingWindowStartHour: (hour: number) => void;
   setActivityFactor: (factor: number) => void;
@@ -219,6 +231,10 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       activityFactor: 1.375,
       weeklySchedule: null,
       pendingDeletedMealIds: [],
+      pendingDeletedExerciseIds: [],
+      dirtyBodyIds: [],
+      dirtyMealIds: [],
+      dirtyExerciseIds: [],
       addBodyRecord: (record) =>
         set((s) => {
           const stripped = stripDemoState(s);
@@ -227,6 +243,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             bodyRecords: [...(stripped.bodyRecords ?? []), record].sort((a, b) =>
               a.date.localeCompare(b.date)
             ),
+            dirtyBodyIds: markDirty(s.dirtyBodyIds, record.id),
           };
         }),
       addMealLog: (log) =>
@@ -237,6 +254,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             mealLogs: [...(stripped.mealLogs ?? []), log].sort((a, b) =>
               a.timestamp.localeCompare(b.timestamp)
             ),
+            dirtyMealIds: markDirty(s.dirtyMealIds, log.id),
           };
         }),
       updateMealLog: (id, partial) =>
@@ -244,6 +262,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
           mealLogs: s.mealLogs
             .map((l) => (l.id === id ? { ...l, ...partial } : l))
             .sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
+          dirtyMealIds: markDirty(s.dirtyMealIds, id),
         })),
       deleteMealLog: (id) =>
         set((s) => ({
@@ -261,10 +280,19 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             exerciseLogs: [...(stripped.exerciseLogs ?? []), log].sort((a, b) =>
               a.timestamp.localeCompare(b.timestamp)
             ),
+            dirtyExerciseIds: markDirty(s.dirtyExerciseIds, log.id),
           };
         }),
       deleteExerciseLog: (id) =>
-        set((s) => ({ exerciseLogs: s.exerciseLogs.filter((l) => l.id !== id) })),
+        set((s) => ({
+          exerciseLogs: s.exerciseLogs.filter((l) => l.id !== id),
+          pendingDeletedExerciseIds: (s.pendingDeletedExerciseIds ?? []).includes(id)
+            ? s.pendingDeletedExerciseIds
+            : [...(s.pendingDeletedExerciseIds ?? []), id],
+        })),
+      clearPendingDeletedExerciseIds: () => set({ pendingDeletedExerciseIds: [] }),
+      clearDirtyIds: () =>
+        set({ dirtyBodyIds: [], dirtyMealIds: [], dirtyExerciseIds: [] }),
       updateGoal: (partial) =>
         set((s) => ({ goal: { ...s.goal, ...partial } })),
       setEatingWindowStartHour: (hour) =>
@@ -274,11 +302,18 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       mergeCloudData: ({ bodyRecords, mealLogs, exerciseLogs }) =>
         set((s) => {
           const next: Partial<GlucoFitState> = {};
+          // 云端采纳（覆盖本地或本机缺失）的记录视为已与云端一致，移出待上行清单
+          const adoptedBody: string[] = [];
+          const adoptedMeal: string[] = [];
+          const adoptedExercise: string[] = [];
           if (bodyRecords?.length) {
             const byId = new Map(s.bodyRecords.map((r) => [r.id, r]));
             for (const r of bodyRecords) {
               const local = byId.get(r.id);
-              if (!local || r.date >= local.date) byId.set(r.id, r);
+              if (!local || r.date >= local.date) {
+                byId.set(r.id, r);
+                adoptedBody.push(r.id);
+              }
             }
             next.bodyRecords = Array.from(byId.values()).sort((a, b) =>
               a.date.localeCompare(b.date)
@@ -291,22 +326,34 @@ export const useGlucoFitStore = create<GlucoFitState>()(
               // 本机已删除（待云端删除）的记录不从云端恢复，避免删除被回滚
               if (tombstones.has(r.id)) continue;
               const local = byId.get(r.id);
-              if (!local || r.timestamp >= local.timestamp) byId.set(r.id, r);
+              if (!local || r.timestamp >= local.timestamp) {
+                byId.set(r.id, r);
+                adoptedMeal.push(r.id);
+              }
             }
             next.mealLogs = Array.from(byId.values()).sort((a, b) =>
               a.timestamp.localeCompare(b.timestamp)
             );
           }
           if (exerciseLogs?.length) {
+            const tombstones = new Set(s.pendingDeletedExerciseIds ?? []);
             const byId = new Map(s.exerciseLogs.map((r) => [r.id, r]));
             for (const r of exerciseLogs) {
+              if (tombstones.has(r.id)) continue;
               const local = byId.get(r.id);
-              if (!local || r.timestamp >= local.timestamp) byId.set(r.id, r);
+              if (!local || r.timestamp >= local.timestamp) {
+                byId.set(r.id, r);
+                adoptedExercise.push(r.id);
+              }
             }
             next.exerciseLogs = Array.from(byId.values()).sort((a, b) =>
               a.timestamp.localeCompare(b.timestamp)
             );
           }
+          const dropDirty = (ids: string[] | undefined, adopted: string[]) =>
+            adopted.length
+              ? (ids ?? []).filter((id) => !adopted.includes(id))
+              : ids ?? [];
           // 云端数据到达即剔除演示种子，避免与真实记录混合；餐记录进 tombstone 以清理云端
           return {
             ...next,
@@ -316,6 +363,9 @@ export const useGlucoFitStore = create<GlucoFitState>()(
               bodyRecords: next.bodyRecords ?? s.bodyRecords,
               exerciseLogs: next.exerciseLogs ?? s.exerciseLogs,
             }),
+            dirtyBodyIds: dropDirty(s.dirtyBodyIds, adoptedBody),
+            dirtyMealIds: dropDirty(s.dirtyMealIds, adoptedMeal),
+            dirtyExerciseIds: dropDirty(s.dirtyExerciseIds, adoptedExercise),
           };
         }),
     }),

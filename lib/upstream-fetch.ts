@@ -47,6 +47,42 @@ export interface UpstreamJsonResult {
   data: unknown;
 }
 
+/** SSRF 防护：仅允许公网 http(s) 地址，拦截内网/环回/链路本地目标 */
+export function assertSafeUpstreamUrl(raw: string): void {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    throw new Error("上游地址格式无效");
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") {
+    throw new Error("上游地址仅支持 http(s) 协议");
+  }
+  // WHATWG URL 对 IPv6 字面量保留方括号
+  const host = u.hostname.toLowerCase();
+  const isV6 = host.includes(":");
+  const v6 = host.replace(/^\[|\]$/g, "");
+  const blocked =
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host.endsWith(".local") ||
+    (isV6 &&
+      (v6 === "::1" ||
+        v6 === "::" ||
+        /^f[cd]/.test(v6) || // IPv6 ULA
+        /^fe[89ab]/.test(v6))) || // IPv6 链路本地
+    (!isV6 &&
+      (/^127\./.test(host) ||
+        /^10\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^169\.254\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+        host.startsWith("0.")));
+  if (blocked) {
+    throw new Error("出于安全考虑，不允许访问内网或本机地址");
+  }
+}
+
 /** 发起上游 JSON 请求（自动经系统代理），返回解析后的 JSON */
 export async function upstreamFetchJson(
   url: string,
