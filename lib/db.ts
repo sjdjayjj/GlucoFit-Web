@@ -1,6 +1,8 @@
+import { webcrypto } from "node:crypto";
 import { upstreamFetchJson } from "@/lib/upstream-fetch";
 import type {
   AIDiagnosisRecord,
+  AISettings,
   BodyCompositionRecord,
   ExerciseLog,
   Gender,
@@ -80,9 +82,10 @@ const SCHEMA_STATEMENTS = [
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME
   )`,
-  // 旧库兼容：补充 v2.2 新增列
+  // 旧库兼容：补充 v3.1 新增列
   `ALTER TABLE users ADD COLUMN password_hash TEXT`,
   `ALTER TABLE users ADD COLUMN strategy TEXT`,
+  `ALTER TABLE users ADD COLUMN ai_settings TEXT`,
   `CREATE TABLE IF NOT EXISTS body_composition (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
@@ -311,4 +314,130 @@ export async function execStatements(
   for (const stmt of statements) {
     await d1Query(stmt.sql, stmt.params);
   }
+}
+
+// ---------- 用户 AI 设置（BYOK，按用户隔离存储，API Key 落库前加密） ----------
+
+const textEnc = new TextEncoder();
+const textDec = new TextDecoder();
+const subtle = webcrypto.subtle;
+
+/** 加密密钥：优先 AI_SETTINGS_SECRET，缺省回退 D1 凭证派生（零配置可用） */
+async function getSecretKey(): Promise<CryptoKey> {
+  const secret =
+    process.env.AI_SETTINGS_SECRET ||
+    process.env.CLOUDFLARE_API_TOKEN ||
+    "glucofit-ai-settings-fallback";
+  const raw = await subtle.digest("SHA-256", textEnc.encode(secret));
+  return subtle.importKey("raw", raw, "AES-GCM", false, [
+    "encrypt",
+    "decrypt",
+  ]);
+}
+
+/** AES-GCM 加密，输出 "v1:" + base64(iv + ciphertext)；空串原样返回 */
+async function encryptSecret(plain: string): Promise<string> {
+  if (!plain) return "";
+  const key = await getSecretKey();
+  const iv = webcrypto.getRandomValues(new Uint8Array(12));
+  const ct = await subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    textEnc.encode(plain)
+  );
+  const bytes = new Uint8Array(iv.length + ct.byteLength);
+  bytes.set(iv);
+  bytes.set(new Uint8Array(ct), iv.length);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return `v1:${btoa(bin)}`;
+}
+
+/** 解密 "v1:" 前缀密文；非密文视为历史明文直接返回；解密失败返回空串 */
+async function decryptSecret(stored: string): Promise<string> {
+  if (!stored) return "";
+  if (!stored.startsWith("v1:")) return stored;
+  try {
+    const bytes = Uint8Array.from(atob(stored.slice(3)), (c) =>
+      c.charCodeAt(0)
+    );
+    const key = await getSecretKey();
+    const pt = await subtle.decrypt(
+      { name: "AES-GCM", iv: bytes.slice(0, 12) },
+      key,
+      bytes.slice(12)
+    );
+    return textDec.decode(pt);
+  } catch {
+    return "";
+  }
+}
+
+interface AISettingsRow {
+  baseUrl: string;
+  apiKeyEnc: string;
+  model: string;
+  visionModel: string;
+  deepThinking: boolean;
+  updatedAt: string;
+}
+
+function parseAISettingsRow(raw: string | null | undefined): AISettingsRow | null {
+  if (!raw) return null;
+  try {
+    const row = JSON.parse(raw) as Partial<AISettingsRow>;
+    if (typeof row !== "object" || row === null) return null;
+    return {
+      baseUrl: typeof row.baseUrl === "string" ? row.baseUrl : "",
+      apiKeyEnc: typeof row.apiKeyEnc === "string" ? row.apiKeyEnc : "",
+      model: typeof row.model === "string" ? row.model : "",
+      visionModel: typeof row.visionModel === "string" ? row.visionModel : "",
+      deepThinking: row.deepThinking === true,
+      updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** 读取用户 AI 设置（apiKey 解密后返回；未配置返回 null） */
+export async function loadAISettings(userId: string): Promise<AISettings | null> {
+  const res = await d1Query(
+    "SELECT ai_settings FROM users WHERE id = ?",
+    [userId]
+  );
+  const raw = res?.[0]?.results?.[0] as { ai_settings?: unknown } | undefined;
+  const row = parseAISettingsRow(
+    typeof raw?.ai_settings === "string" ? raw.ai_settings : null
+  );
+  if (!row) return null;
+  return {
+    baseUrl: row.baseUrl,
+    apiKey: await decryptSecret(row.apiKeyEnc),
+    model: row.model,
+    visionModel: row.visionModel,
+    deepThinking: row.deepThinking,
+    updatedAt: row.updatedAt,
+  };
+}
+
+/** 保存用户 AI 设置（apiKey 加密落库），返回云端 updatedAt */
+export async function saveAISettings(
+  userId: string,
+  settings: AISettings
+): Promise<string> {
+  const updatedAt = new Date().toISOString();
+  const row: AISettingsRow = {
+    baseUrl: settings.baseUrl ?? "",
+    apiKeyEnc: await encryptSecret(settings.apiKey ?? ""),
+    model: settings.model ?? "",
+    visionModel: settings.visionModel ?? "",
+    deepThinking: settings.deepThinking === true,
+    updatedAt,
+  };
+  await d1Query("UPDATE users SET ai_settings = ? WHERE id = ?", [
+    JSON.stringify(row),
+    userId,
+  ]);
+  return updatedAt;
 }

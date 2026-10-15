@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAISettingsStore, useGlucoFitStore } from "@/lib/storage";
 import { useProfileStore } from "@/lib/profile";
+import { useAuthStore } from "@/lib/auth-store";
 import { testConnection } from "@/lib/ai-client";
 import type { AISettings } from "@/types";
 import type { WeeklyScheduleConfig } from "@/types/v3";
@@ -137,12 +138,23 @@ export function SettingsDialog({
       return;
     }
     setError(null);
-    updateAISettings({
+    const next: AISettings = {
       baseUrl: form.baseUrl.trim(),
       apiKey: form.apiKey.trim(),
       model: form.model.trim(),
       visionModel: form.visionModel.trim(),
-    });
+      deepThinking: form.deepThinking === true,
+      updatedAt: new Date().toISOString(),
+    };
+    updateAISettings(next);
+    // 已登录时同步上行至云端档案（按用户隔离，API Key 服务端加密落库）
+    if (useAuthStore.getState().user) {
+      void fetch("/api/ai-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      }).catch(() => null);
+    }
     // v3.0：同步保存周期双模配置
     setWeeklySchedule(
       scheduleForm.enabled
@@ -161,7 +173,7 @@ export function SettingsDialog({
             设置
           </DialogTitle>
           <DialogDescription>
-            AI 模型采用 BYOK 模式：凭证混淆加密后仅保存在本浏览器，请求经本地代理转发，服务器不留存任何凭证。
+            AI 模型采用 BYOK 模式：已登录用户的配置随账号云端存储（API Key 服务端加密落库、仅本人可读），换设备登录自动同步；未登录时仅保存在本浏览器。
           </DialogDescription>
         </DialogHeader>
 

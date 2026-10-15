@@ -3,20 +3,22 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
+  AISettings,
   BodyCompositionRecord,
   ExerciseLog,
   MealLog,
   UserProfile,
 } from "@/types";
-import { useGlucoFitStore } from "@/lib/storage";
+import { useGlucoFitStore, useAISettingsStore } from "@/lib/storage";
 import { useProfileStore } from "@/lib/profile";
 import { useAuthStore } from "@/lib/auth-store";
 
 /**
- * 云同步客户端 (v2.2，中心化托管)：
+ * 云同步客户端 (v3.1，中心化托管)：
  * 会话经 HttpOnly Cookie 鉴权，无需任何用户配置。
  * 流程 = 拉取（云端 → 本地按 id/时间新者胜合并）→ 推送（合并后全量上行）。
  * 图片字段不同步（D1 行限制），图片仍仅存本地。
+ * AI 模型配置（BYOK）按用户存云端：本地为空时采纳云端，否则按 updatedAt 新者胜。
  */
 
 // ---------- 同步元信息（上次同步时间） ----------
@@ -99,6 +101,25 @@ async function pushProfile(profile: UserProfile): Promise<void> {
   if (!res.ok) throw new Error(extractError(data, "上传档案失败"));
 }
 
+async function pushAISettings(settings: AISettings): Promise<string | null> {
+  const res = await fetch("/api/ai-settings", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  });
+  const data = (await res.json().catch(() => null)) as
+    | { ok?: boolean; updatedAt?: string }
+    | { error: string }
+    | null;
+  if (!res.ok) throw new Error(extractError(data, "上传 AI 设置失败"));
+  return (data as { updatedAt?: string }).updatedAt ?? null;
+}
+
+/** 本地 AI 设置是否从未配置（无任何有效字段） */
+function isAISettingsEmpty(s: AISettings): boolean {
+  return !s.apiKey && !s.baseUrl && !s.model;
+}
+
 /**
  * 完整双向同步：pull → merge → push（需已登录，Cookie 自动携带）。
  * 同时承担「本地离线数据一键合并至云端」的迁移职责。
@@ -113,8 +134,9 @@ export async function syncAll(): Promise<void> {
   runtime.setLastError(null);
   try {
     // 1. 拉取云端数据（档案随 /api/auth/me 返回）
-    const [meRes, bodyRecords, mealLogs, exerciseLogs] = await Promise.all([
+    const [meRes, aiRes, bodyRecords, mealLogs, exerciseLogs] = await Promise.all([
       fetch("/api/auth/me", { cache: "no-store" }),
+      fetch("/api/ai-settings", { cache: "no-store" }),
       listRecords<BodyCompositionRecord>("body"),
       listRecords<MealLog>("meal"),
       listRecords<ExerciseLog>("exercise"),
@@ -128,6 +150,31 @@ export async function syncAll(): Promise<void> {
     const localProfile = useProfileStore.getState().profile;
     if (cloudProfile && (!localProfile || cloudProfile.updatedAt > localProfile.updatedAt)) {
       useProfileStore.getState().saveProfile(cloudProfile);
+    }
+
+    // 2.5 合并 AI 模型配置：本地为空采纳云端，否则 updatedAt 新者胜
+    const cloudAI =
+      ((await aiRes.json().catch(() => null)) as { settings?: AISettings | null })
+        ?.settings ?? null;
+    const cloudAIUsable =
+      cloudAI && !isAISettingsEmpty(cloudAI) ? cloudAI : null;
+    const localAI = useAISettingsStore.getState().aiSettings;
+    let pushLocalAI = false;
+    if (cloudAIUsable) {
+      const cloudNewer =
+        !isAISettingsEmpty(localAI) &&
+        !!cloudAIUsable.updatedAt &&
+        (!localAI.updatedAt || cloudAIUsable.updatedAt > localAI.updatedAt);
+      if (isAISettingsEmpty(localAI) || cloudNewer) {
+        useAISettingsStore.getState().updateAISettings(cloudAIUsable);
+      } else if (
+        localAI.updatedAt &&
+        (!cloudAIUsable.updatedAt || localAI.updatedAt > cloudAIUsable.updatedAt)
+      ) {
+        pushLocalAI = true;
+      }
+    } else if (!isAISettingsEmpty(localAI)) {
+      pushLocalAI = true;
     }
 
     // 3. 合并三类记录（id 去重、时间新者胜）
@@ -152,6 +199,16 @@ export async function syncAll(): Promise<void> {
       ),
       pushRecords("exercise", state.exerciseLogs),
     ]);
+
+    // 4.5 本地 AI 配置较新时上行，并将云端 updatedAt 写回本地
+    if (pushLocalAI) {
+      const aiUpdatedAt = await pushAISettings(localAI);
+      if (aiUpdatedAt) {
+        useAISettingsStore
+          .getState()
+          .updateAISettings({ ...localAI, updatedAt: aiUpdatedAt });
+      }
+    }
 
     // 5. 云端删除本机已移除的餐记录（tombstone），成功后清空待删清单；
     //    失败则保留清单，下次同步重试
