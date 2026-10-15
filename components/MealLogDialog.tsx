@@ -37,7 +37,7 @@ import {
 } from "@/types";
 import { computeMealScore, getScoreTone, SCORE_TONE_CLASS } from "@/lib/scoring";
 import { useAISettingsStore, useGlucoFitStore } from "@/lib/storage";
-import { analyzeMealPhoto } from "@/lib/ai-client";
+import { analyzeMealPhoto, estimateMealNutrition } from "@/lib/ai-client";
 import { downscaleImageFile } from "@/lib/image";
 import { MealVoiceInput, type VoiceMealParse } from "@/components/MealVoiceInput";
 import { PreMealRadar } from "@/components/PreMealRadar";
@@ -134,6 +134,9 @@ export function MealLogDialog({
   const [sequenceAdvice, setSequenceAdvice] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [textEstimating, setTextEstimating] = useState(false);
+  const [textEstimateError, setTextEstimateError] = useState<string | null>(null);
+  const estimatedTextRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -150,6 +153,9 @@ export function MealLogDialog({
       setSequenceAdvice(prefill?.sourceNote ?? null);
       setAnalyzing(false);
       setAnalysisError(null);
+      setTextEstimating(false);
+      setTextEstimateError(null);
+      estimatedTextRef.current = (prefill?.foodSummary ?? "").trim();
     }
   }, [open, prefill]);
 
@@ -164,6 +170,7 @@ export function MealLogDialog({
     setAnalysisError(null);
     try {
       const result = await analyzeMealPhoto(aiSettings, dataUrl);
+      estimatedTextRef.current = result.foodSummary;
       setFoodSummary(result.foodSummary);
       setNutrition({
         calories: result.calories,
@@ -194,6 +201,7 @@ export function MealLogDialog({
   /** 语音解析结果自动预填表单 */
   const applyVoiceParse = (r: VoiceMealParse) => {
     setMealType(r.mealType);
+    estimatedTextRef.current = (r.foodSummary || "").trim();
     setFoodSummary(r.foodSummary);
     setFollowedSequence(r.followedSequence);
     setAvoidedRefinedCarb(r.avoidedRefinedCarb);
@@ -207,6 +215,28 @@ export function MealLogDialog({
       fiberG: n?.fiberG ?? 0,
     }));
   };
+
+  /** 简记文字防抖触发 AI 热量估算；拍照/语音已带营养数据时跳过，避免重复调用 */
+  useEffect(() => {
+    if (!open || mode !== "log") return;
+    const text = foodSummary.trim();
+    if (text.length < 4 || text === estimatedTextRef.current) return;
+    if (!aiSettings.baseUrl || !aiSettings.apiKey || !aiSettings.model) return;
+    const timer = setTimeout(() => {
+      estimatedTextRef.current = text;
+      setTextEstimating(true);
+      setTextEstimateError(null);
+      estimateMealNutrition(aiSettings, text)
+        .then(setNutrition)
+        .catch((e) =>
+          setTextEstimateError(
+            (e as Error).message || "热量估算失败，可手动填写营养数据"
+          )
+        )
+        .finally(() => setTextEstimating(false));
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [foodSummary, open, mode, aiSettings]);
 
   const score = computeMealScore({
     followedSequence,
@@ -483,6 +513,15 @@ export function MealLogDialog({
               value={foodSummary}
               onChange={(e) => setFoodSummary(e.target.value)}
             />
+            {textEstimating && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                AI 正在估算热量与宏量营养素…
+              </p>
+            )}
+            {textEstimateError && !textEstimating && (
+              <p className="text-xs text-red-500">{textEstimateError}</p>
+            )}
           </div>
 
           {/* 实时稳糖分 */}

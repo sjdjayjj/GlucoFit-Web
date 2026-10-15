@@ -1,6 +1,7 @@
 import type {
   AISettings,
   MealRecommendation,
+  NutritionSummary,
   UserGoalConfig,
 } from "@/types";
 import type { PreMealPlanResult } from "@/types/v3";
@@ -210,6 +211,42 @@ export async function analyzeMealPhoto(
     fiberG: parsed.fiberG == null ? undefined : num(parsed.fiberG),
     hasRefinedCarb: parsed.hasRefinedCarb === true,
     sequenceAdvice: String(parsed.sequenceAdvice || ""),
+  };
+}
+
+// ---------- 模块 H-：文本简记热量估算 ----------
+
+const MEAL_TEXT_ESTIMATE_PROMPT = `你是营养估算引擎。根据用户对一餐的文字描述，估算热量与宏量营养素，以纯 JSON 输出（不得包含 Markdown 标记）：
+{"calories": number, "carbsG": number, "proteinG": number, "fatG": number, "fiberG": number}
+要求：
+- calories 单位 kcal，其余为克，数值取整
+- 按常见家庭/外卖份量估算，宁可保守不高估
+- 描述简略时按最可能的解读估算，不要返回错误或留空`;
+
+/** 文本简记 → 热量与宏量营养素估算（走文本模型，无需照片） */
+export async function estimateMealNutrition(
+  settings: AISettings,
+  text: string
+): Promise<NutritionSummary> {
+  const raw = await chatCompletion(
+    settings,
+    [
+      { role: "system", content: MEAL_TEXT_ESTIMATE_PROMPT },
+      { role: "user", content: text },
+    ],
+    { model: settings.model, temperature: 0.2 }
+  );
+  const parsed = extractJson<Record<string, unknown>>(raw);
+  if (!parsed) {
+    throw new Error("热量估算失败，请稍后重试或手动填写营养数据");
+  }
+  const num = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
+  return {
+    calories: num(parsed.calories),
+    carbsG: num(parsed.carbsG),
+    proteinG: num(parsed.proteinG),
+    fatG: num(parsed.fatG),
+    fiberG: num(parsed.fiberG),
   };
 }
 
