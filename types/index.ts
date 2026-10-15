@@ -71,7 +71,18 @@ export interface MealRecommendation {
 
 // --- 7. 饮食打卡预填（AI 推荐方案采纳） ---
 export interface MealLogPrefill {
+  /** 编辑已有记录时传入原记录 id */
+  id?: string;
+  /** 编辑时保留原始打卡时间 */
+  timestamp?: string;
+  /** 编辑时保留原图（未重新上传则不丢失） */
+  imageUrl?: string;
   mealType?: MealType;
+  followedSequence?: boolean;
+  avoidedRefinedCarb?: boolean;
+  postMealActivity?: boolean;
+  energyReaction?: EnergyReaction;
+  satietyDuration?: SatietyDuration | null;
   foodSummary?: string;
   nutrition?: NutritionSummary;
   sourceNote?: string;

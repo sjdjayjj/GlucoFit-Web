@@ -36,7 +36,7 @@ import { useProfileStore } from "@/lib/profile";
 import { useAuthStore } from "@/lib/auth-store";
 import { syncAll, useSyncRuntimeStore, useSyncMetaStore } from "@/lib/cloud";
 import { fmtDate } from "@/lib/utils";
-import type { MealLogPrefill, MealRecommendation } from "@/types";
+import type { MealLog, MealLogPrefill, MealRecommendation } from "@/types";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -51,6 +51,7 @@ export default function Home() {
   const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
 
   const mealLogs = useGlucoFitStore((s) => s.mealLogs);
+  const deleteMealLog = useGlucoFitStore((s) => s.deleteMealLog);
   const profile = useProfileStore((s) => s.profile);
   const onboardingDismissed = useProfileStore((s) => s.onboardingDismissed);
   const user = useAuthStore((s) => s.user);
@@ -116,6 +117,28 @@ export default function Home() {
   const openMealDialog = (prefill: MealLogPrefill | null = null) => {
     setMealPrefill(prefill);
     setMealDialogOpen(true);
+  };
+
+  /** 编辑已有餐记录：整条回填打卡弹窗 */
+  const handleEditMeal = (log: MealLog) => {
+    openMealDialog({
+      id: log.id,
+      timestamp: log.timestamp,
+      imageUrl: log.imageUrl,
+      mealType: log.mealType,
+      followedSequence: log.followedSequence,
+      avoidedRefinedCarb: log.avoidedRefinedCarb,
+      postMealActivity: log.postMealActivity,
+      energyReaction: log.energyReaction,
+      satietyDuration: log.satietyDuration ?? null,
+      foodSummary: log.foodSummary,
+      nutrition: log.nutrition,
+    });
+  };
+
+  const handleDeleteMeal = (id: string) => {
+    deleteMealLog(id);
+    showToast(true, "已删除该餐记录，下次同步时将自云端移除");
   };
 
   const handleAdoptRecommendation = (rec: MealRecommendation) => {
@@ -267,7 +290,14 @@ export default function Home() {
                     </p>
                   </div>
                 ) : (
-                  todayMeals.map((log) => <MealLogCard key={log.id} log={log} />)
+                  todayMeals.map((log) => (
+                    <MealLogCard
+                      key={log.id}
+                      log={log}
+                      onEdit={handleEditMeal}
+                      onDelete={handleDeleteMeal}
+                    />
+                  ))
                 )}
               </CardContent>
             </Card>

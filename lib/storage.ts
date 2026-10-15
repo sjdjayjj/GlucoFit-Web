@@ -150,6 +150,10 @@ interface GlucoFitState {
   addBodyRecord: (record: BodyCompositionRecord) => void;
   addMealLog: (log: MealLog) => void;
   updateMealLog: (id: string, partial: Partial<MealLog>) => void;
+  deleteMealLog: (id: string) => void;
+  /** 本机已删除、待云端同步删除的餐记录 id（tombstone，云端删除成功后清空） */
+  pendingDeletedMealIds: string[];
+  clearPendingDeletedMealIds: () => void;
   addExerciseLog: (log: ExerciseLog) => void;
   deleteExerciseLog: (id: string) => void;
   updateGoal: (partial: Partial<UserGoalConfig>) => void;
@@ -174,6 +178,7 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       eatingWindowStartHour: 10,
       activityFactor: 1.375,
       weeklySchedule: null,
+      pendingDeletedMealIds: [],
       addBodyRecord: (record) =>
         set((s) => ({
           bodyRecords: [...s.bodyRecords, record].sort((a, b) =>
@@ -192,6 +197,14 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             .map((l) => (l.id === id ? { ...l, ...partial } : l))
             .sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
         })),
+      deleteMealLog: (id) =>
+        set((s) => ({
+          mealLogs: s.mealLogs.filter((l) => l.id !== id),
+          pendingDeletedMealIds: (s.pendingDeletedMealIds ?? []).includes(id)
+            ? s.pendingDeletedMealIds
+            : [...(s.pendingDeletedMealIds ?? []), id],
+        })),
+      clearPendingDeletedMealIds: () => set({ pendingDeletedMealIds: [] }),
       addExerciseLog: (log) =>
         set((s) => ({
           exerciseLogs: [...s.exerciseLogs, log].sort((a, b) =>
@@ -220,8 +233,11 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             );
           }
           if (mealLogs?.length) {
+            const tombstones = new Set(s.pendingDeletedMealIds ?? []);
             const byId = new Map(s.mealLogs.map((r) => [r.id, r]));
             for (const r of mealLogs) {
+              // 本机已删除（待云端删除）的记录不从云端恢复，避免删除被回滚
+              if (tombstones.has(r.id)) continue;
               const local = byId.get(r.id);
               if (!local || r.timestamp >= local.timestamp) byId.set(r.id, r);
             }

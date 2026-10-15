@@ -116,6 +116,7 @@ export function MealLogDialog({
   prefill?: MealLogPrefill | null;
 }) {
   const addMealLog = useGlucoFitStore((s) => s.addMealLog);
+  const updateMealLog = useGlucoFitStore((s) => s.updateMealLog);
   const aiSettings = useAISettingsStore((s) => s.aiSettings);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -142,20 +143,23 @@ export function MealLogDialog({
     if (open) {
       setMode("log");
       setMealType(prefill?.mealType ?? guessMealType());
-      setFollowedSequence(true);
-      setAvoidedRefinedCarb(true);
-      setPostMealActivity(false);
-      setEnergyReaction("normal");
-      setSatietyDuration(null);
+      setFollowedSequence(prefill?.followedSequence ?? true);
+      setAvoidedRefinedCarb(prefill?.avoidedRefinedCarb ?? true);
+      setPostMealActivity(prefill?.postMealActivity ?? false);
+      setEnergyReaction(prefill?.energyReaction ?? "normal");
+      setSatietyDuration(prefill?.satietyDuration ?? null);
       setFoodSummary(prefill?.foodSummary ?? "");
       setNutrition(prefill?.nutrition ?? null);
-      setImageUrl(undefined);
+      setImageUrl(prefill?.imageUrl);
       setSequenceAdvice(prefill?.sourceNote ?? null);
       setAnalyzing(false);
       setAnalysisError(null);
       setTextEstimating(false);
       setTextEstimateError(null);
-      estimatedTextRef.current = (prefill?.foodSummary ?? "").trim();
+      // 预填已带营养数据（推荐方案/编辑含营养记录）时跳过文字自动估算；
+      // 编辑无营养的历史记录则允许估算补齐热量
+      estimatedTextRef.current =
+        prefill?.nutrition != null ? (prefill?.foodSummary ?? "").trim() : null;
     }
   }, [open, prefill]);
 
@@ -248,8 +252,8 @@ export function MealLogDialog({
 
   const handleSave = () => {
     const log: MealLog = {
-      id: uid(),
-      timestamp: new Date().toISOString(),
+      id: prefill?.id ?? uid(),
+      timestamp: prefill?.timestamp ?? new Date().toISOString(),
       mealType,
       followedSequence,
       avoidedRefinedCarb,
@@ -261,7 +265,11 @@ export function MealLogDialog({
       imageUrl,
       nutrition: nutrition ?? undefined,
     };
-    addMealLog(log);
+    if (prefill?.id) {
+      updateMealLog(prefill.id, log);
+    } else {
+      addMealLog(log);
+    }
     onOpenChange(false);
   };
 
@@ -269,7 +277,7 @@ export function MealLogDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>控糖饮食打卡</DialogTitle>
+          <DialogTitle>{prefill?.id ? "编辑打卡记录" : "控糖饮食打卡"}</DialogTitle>
           <DialogDescription>
             吃前排雷规划，或拍照识别热量宏量记录进食行为与餐后反应
           </DialogDescription>
@@ -548,7 +556,7 @@ export function MealLogDialog({
           </Button>
           <Button onClick={handleSave}>
             <Check className="h-4 w-4" />
-            完成打卡
+            {prefill?.id ? "保存修改" : "完成打卡"}
           </Button>
         </DialogFooter>
         )}

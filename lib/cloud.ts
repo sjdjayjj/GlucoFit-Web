@@ -153,6 +153,19 @@ export async function syncAll(): Promise<void> {
       pushRecords("exercise", state.exerciseLogs),
     ]);
 
+    // 5. 云端删除本机已移除的餐记录（tombstone），成功后清空待删清单；
+    //    失败则保留清单，下次同步重试
+    const { pendingDeletedMealIds, clearPendingDeletedMealIds } =
+      useGlucoFitStore.getState();
+    if (pendingDeletedMealIds?.length) {
+      const delRes = await fetch("/api/records/meal", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: pendingDeletedMealIds }),
+      });
+      if (delRes.ok) clearPendingDeletedMealIds();
+    }
+
     useSyncMetaStore.getState().setLastSyncAt(new Date().toISOString());
     runtime.setSyncing(false);
   } catch (e) {

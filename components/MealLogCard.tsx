@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import {
   CheckCircle2,
   Cookie,
   Moon,
+  Pencil,
   Sandwich,
   Sunrise,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import {
@@ -48,9 +51,27 @@ function BehaviorBadge({ ok, okText, badText }: { ok: boolean; okText: string; b
   );
 }
 
-export function MealLogCard({ log }: { log: MealLog }) {
+export function MealLogCard({
+  log,
+  onEdit,
+  onDelete,
+}: {
+  log: MealLog;
+  onEdit?: (log: MealLog) => void;
+  onDelete?: (id: string) => void;
+}) {
   const MealIcon = MEAL_TYPE_ICON[log.mealType];
   const tone = getScoreTone(log.score);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const handleDeleteClick = () => {
+    if (confirmingDelete) {
+      onDelete?.(log.id);
+      return;
+    }
+    setConfirmingDelete(true);
+    setTimeout(() => setConfirmingDelete(false), 3000);
+  };
 
   return (
     <div className="rounded-lg border bg-card p-3.5 shadow-sm">
@@ -73,14 +94,51 @@ export function MealLogCard({ log }: { log: MealLog }) {
             <div className="text-[11px] text-muted-foreground">{shortTime(log.timestamp)}</div>
           </div>
         </div>
-        <div
-          className={cn(
-            "flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border text-sm font-bold tabular-nums",
-            SCORE_TONE_CLASS[tone]
+        <div className="flex shrink-0 items-start gap-1">
+          {(onEdit || onDelete) && (
+            <div className="flex items-center gap-0.5">
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(log)}
+                  title="编辑"
+                  aria-label="编辑该餐记录"
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {onDelete &&
+                (confirmingDelete ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600"
+                  >
+                    确认删除
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    title="删除"
+                    aria-label="删除该餐记录"
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ))}
+            </div>
           )}
-        >
-          {log.score}
-          <span className="text-[9px] font-normal">稳糖分</span>
+          <div
+            className={cn(
+              "flex h-10 w-10 flex-col items-center justify-center rounded-lg border text-sm font-bold tabular-nums",
+              SCORE_TONE_CLASS[tone]
+            )}
+          >
+            {log.score}
+            <span className="text-[9px] font-normal">稳糖分</span>
+          </div>
         </div>
       </div>
 

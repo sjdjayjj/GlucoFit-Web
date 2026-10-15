@@ -70,3 +70,32 @@ export async function POST(req: Request) {
     );
   }
 }
+
+/** DELETE 批量删除（同步端 tombstone）：body = { ids: string[] } */
+export async function DELETE(req: Request) {
+  const auth = await requireSession(req);
+  if ("error" in auth) return auth.error;
+  try {
+    await ensureSchema();
+    const body = (await req.json().catch(() => null)) as { ids?: unknown } | null;
+    const ids = Array.isArray(body?.ids)
+      ? body.ids.filter((x): x is string => typeof x === "string" && x.length > 0)
+      : [];
+    if (!ids.length) {
+      return Response.json({ error: "缺少 ids" }, { status: 400 });
+    }
+    const placeholders = ids.map(() => "?").join(", ");
+    await execStatements([
+      {
+        sql: `DELETE FROM meal_logs WHERE user_id = ? AND id IN (${placeholders})`,
+        params: [auth.userId, ...ids],
+      },
+    ]);
+    return Response.json({ ok: true, count: ids.length });
+  } catch (e) {
+    return Response.json(
+      { error: (e as Error).message || "删除饮食记录失败" },
+      { status: 500 }
+    );
+  }
+}
