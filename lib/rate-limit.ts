@@ -15,11 +15,11 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
   }
   hits.push(now);
   buckets.set(key, hits);
-  // 防内存膨胀：桶数超限时清理已过期条目
+  // 防内存膨胀：桶数超限时清理已过期条目（forEach 兼容低 target，迭代中删除安全）
   if (buckets.size > 10_000) {
-    for (const [k, v] of buckets) {
+    buckets.forEach((v, k) => {
       if (v.every((t) => now - t >= windowMs)) buckets.delete(k);
-    }
+    });
   }
   return true;
 }
