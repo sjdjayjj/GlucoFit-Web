@@ -57,7 +57,12 @@ async function chatCompletion(
     error?: string;
   } | null;
   if (!res.ok) {
-    throw new Error(data?.error || `AI 请求失败 (${res.status})`);
+    throw new Error(
+      data?.error ||
+        (res.status === 429
+          ? "今日配额用尽，请更换模型或服务商，或明日再试"
+          : `AI 请求失败 (${res.status})`)
+    );
   }
   return data?.content ?? "";
 }

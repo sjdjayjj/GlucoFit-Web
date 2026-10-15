@@ -43,9 +43,24 @@ export async function POST(req: Request) {
     } | null;
 
     if (!res.ok) {
-      const msg =
-        data?.error?.message || data?.message || `上游服务返回 ${res.status}`;
-      return Response.json({ error: msg }, { status: 502 });
+      const upstream = (data ?? {}) as {
+        error?: { message?: string; status?: string; code?: number | string };
+        message?: string;
+      };
+      // 兼容各家错误体形状（OpenAI / Google / 中转站），深度扫描兜底
+      const raw = JSON.stringify(data ?? {});
+      const upstreamMsg = upstream.error?.message || upstream.message || "";
+      // 识别配额/限流：Google 风格 RESOURCE_EXHAUSTED、OpenAI 风格 429/quota
+      const isQuota =
+        res.status === 429 ||
+        upstream.error?.status === "RESOURCE_EXHAUSTED" ||
+        /RESOURCE_EXHAUSTED|insufficient_quota|quota\s?(exceeded|exhausted)|rate.?limit/i.test(
+          raw
+        );
+      const msg = isQuota
+        ? "今日配额用尽：当前模型/服务商的额度已耗尽，请更换模型或服务商，或明日再试"
+        : upstreamMsg || `上游服务返回 ${res.status}`;
+      return Response.json({ error: msg }, { status: isQuota ? 429 : 502 });
     }
 
     const content = data?.choices?.[0]?.message?.content;
