@@ -34,7 +34,7 @@ function mockBodyRecords(): BodyCompositionRecord[] {
     { weightKg: 79.1, bmi: 26.7, bodyFatRate: 24.2, bodyScore: 81, waterWeightKg: 43.4, fatMassKg: 19.1, boneMassKg: 3.2, proteinWeightKg: 12.7 },
   ];
   return rows.map((row, i) => ({
-    id: uid(),
+    id: "demo-" + uid(),
     date: daysAgoDateStr(rows.length - 1 - i),
     notes: undefined,
     ...row,
@@ -63,7 +63,7 @@ function mockMealLogs(): MealLog[] {
       energyReaction: partial.energyReaction ?? ("normal" as const),
     };
     return {
-      id: uid(),
+      id: "demo-" + uid(),
       timestamp: at(daysAgo, hour, minute),
       mealType,
       satietyDuration: "2_to_4h",
@@ -114,7 +114,7 @@ function mockExerciseLogs(): ExerciseLog[] {
   };
   return [
     {
-      id: uid(),
+      id: "demo-" + uid(),
       timestamp: at(0, 13, 10),
       category: "post_meal_walk",
       durationMinutes: 15,
@@ -123,7 +123,7 @@ function mockExerciseLogs(): ExerciseLog[] {
       muscleFeel: ["无疲劳感"],
     },
     {
-      id: uid(),
+      id: "demo-" + uid(),
       timestamp: at(1, 19, 30),
       category: "resistance",
       durationMinutes: 30,
@@ -132,6 +132,46 @@ function mockExerciseLogs(): ExerciseLog[] {
       muscleFeel: ["下肢酸胀", "核心紧绷"],
     },
   ];
+}
+
+// ---------- 演示种子数据识别与清理 ----------
+
+/** 演示餐记录文案指纹（旧版本无 demo- 前缀，靠此识别存量脏数据） */
+const DEMO_MEAL_SUMMARIES = new Set([
+  "燕麦片 + 水煮蛋 + 蓝莓 + 无糖豆浆",
+  "牛肉菠菜糙米饭",
+  "外卖咖喱白米饭（精制碳水）",
+  "三文鱼西兰花藜麦沙拉",
+  "全麦贝果 + 煎蛋 + 牛油果",
+]);
+
+const isDemoMeal = (m: MealLog) =>
+  m.id.startsWith("demo-") ||
+  // 文案指纹仅命中无照片、无营养数据的裸记录；真实手输记录经 AI 估算会带 nutrition，不受影响
+  (DEMO_MEAL_SUMMARIES.has(m.foodSummary) && !m.imageUrl && !m.nutrition);
+
+/** 剔除全部演示数据；被剔除的餐记录标记进 tombstone 以便同步删除云端 */
+function stripDemoState(s: {
+  mealLogs: MealLog[];
+  bodyRecords: BodyCompositionRecord[];
+  exerciseLogs: ExerciseLog[];
+  pendingDeletedMealIds?: string[];
+}): Partial<GlucoFitState> {
+  const demoMeals = s.mealLogs.filter(isDemoMeal);
+  const out: Partial<GlucoFitState> = {
+    mealLogs: s.mealLogs.filter((m) => !isDemoMeal(m)),
+    bodyRecords: s.bodyRecords.filter((r) => !r.id.startsWith("demo-")),
+    exerciseLogs: s.exerciseLogs.filter((l) => !l.id.startsWith("demo-")),
+  };
+  if (demoMeals.length) {
+    out.pendingDeletedMealIds = Array.from(
+      new Set([
+        ...(s.pendingDeletedMealIds ?? []),
+        ...demoMeals.map((m) => m.id),
+      ])
+    );
+  }
+  return out;
 }
 
 // ---------- Store ----------
@@ -180,17 +220,25 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       weeklySchedule: null,
       pendingDeletedMealIds: [],
       addBodyRecord: (record) =>
-        set((s) => ({
-          bodyRecords: [...s.bodyRecords, record].sort((a, b) =>
-            a.date.localeCompare(b.date)
-          ),
-        })),
+        set((s) => {
+          const stripped = stripDemoState(s);
+          return {
+            ...stripped,
+            bodyRecords: [...(stripped.bodyRecords ?? []), record].sort((a, b) =>
+              a.date.localeCompare(b.date)
+            ),
+          };
+        }),
       addMealLog: (log) =>
-        set((s) => ({
-          mealLogs: [...s.mealLogs, log].sort((a, b) =>
-            a.timestamp.localeCompare(b.timestamp)
-          ),
-        })),
+        set((s) => {
+          const stripped = stripDemoState(s);
+          return {
+            ...stripped,
+            mealLogs: [...(stripped.mealLogs ?? []), log].sort((a, b) =>
+              a.timestamp.localeCompare(b.timestamp)
+            ),
+          };
+        }),
       updateMealLog: (id, partial) =>
         set((s) => ({
           mealLogs: s.mealLogs
@@ -206,11 +254,15 @@ export const useGlucoFitStore = create<GlucoFitState>()(
         })),
       clearPendingDeletedMealIds: () => set({ pendingDeletedMealIds: [] }),
       addExerciseLog: (log) =>
-        set((s) => ({
-          exerciseLogs: [...s.exerciseLogs, log].sort((a, b) =>
-            a.timestamp.localeCompare(b.timestamp)
-          ),
-        })),
+        set((s) => {
+          const stripped = stripDemoState(s);
+          return {
+            ...stripped,
+            exerciseLogs: [...(stripped.exerciseLogs ?? []), log].sort((a, b) =>
+              a.timestamp.localeCompare(b.timestamp)
+            ),
+          };
+        }),
       deleteExerciseLog: (id) =>
         set((s) => ({ exerciseLogs: s.exerciseLogs.filter((l) => l.id !== id) })),
       updateGoal: (partial) =>
@@ -255,11 +307,35 @@ export const useGlucoFitStore = create<GlucoFitState>()(
               a.timestamp.localeCompare(b.timestamp)
             );
           }
-          return next;
+          // 云端数据到达即剔除演示种子，避免与真实记录混合；餐记录进 tombstone 以清理云端
+          return {
+            ...next,
+            ...stripDemoState({
+              ...s,
+              mealLogs: next.mealLogs ?? s.mealLogs,
+              bodyRecords: next.bodyRecords ?? s.bodyRecords,
+              exerciseLogs: next.exerciseLogs ?? s.exerciseLogs,
+            }),
+          };
         }),
     }),
     {
       name: STORAGE_KEY,
+      version: 1,
+      // v1：清理历史版本遗留的无 demo- 前缀演示种子数据（按文案指纹识别）
+      migrate: (persisted) => {
+        const p = persisted as Partial<GlucoFitState> | null;
+        if (!p || !Array.isArray(p.mealLogs)) return p as GlucoFitState;
+        return {
+          ...p,
+          ...stripDemoState({
+            mealLogs: p.mealLogs,
+            bodyRecords: p.bodyRecords ?? [],
+            exerciseLogs: p.exerciseLogs ?? [],
+            pendingDeletedMealIds: p.pendingDeletedMealIds,
+          }),
+        } as GlucoFitState;
+      },
       storage: createJSONStorage(() => localStorage),
     }
   )
