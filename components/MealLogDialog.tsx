@@ -51,9 +51,9 @@ const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string; icon: React.Com
 ];
 
 const ENERGY_OPTIONS: Array<{ value: EnergyReaction; label: string; activeClass: string }> = [
-  { value: "energetic", label: "精力充沛", activeClass: "border-emerald-500 bg-emerald-50 text-emerald-700" },
-  { value: "normal", label: "正常平稳", activeClass: "border-slate-500 bg-slate-100 text-slate-700" },
-  { value: "food_coma", label: "明显嗜睡脑雾", activeClass: "border-red-500 bg-red-50 text-red-600" },
+  { value: "energetic", label: "精力充沛", activeClass: "border-success bg-success/10 text-success" },
+  { value: "normal", label: "正常平稳", activeClass: "border-border bg-muted text-foreground" },
+  { value: "food_coma", label: "明显嗜睡脑雾", activeClass: "border-destructive bg-destructive/10 text-destructive" },
 ];
 
 const SATIETY_OPTIONS: Array<{ value: SatietyDuration; label: string }> = [
@@ -95,7 +95,7 @@ function SegmentedButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-colors",
+        "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-colors",
         selected
           ? activeClass ?? "border-primary bg-primary/10 text-primary"
           : "border-input bg-card text-muted-foreground hover:bg-muted"
@@ -336,7 +336,7 @@ export function MealLogDialog({
                 />
                 <div className="flex-1 text-xs text-muted-foreground">
                   {analyzing ? (
-                    <span className="flex items-center gap-1.5 text-emerald-600">
+                    <span className="flex items-center gap-1.5 text-success">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       AI 正在分析菜品与热量…
                     </span>
@@ -354,7 +354,7 @@ export function MealLogDialog({
                 <button
                   type="button"
                   aria-label="移除照片"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="-m-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={() => {
                     setImageUrl(undefined);
                     setAnalysisError(null);
@@ -368,20 +368,20 @@ export function MealLogDialog({
                 type="button"
                 disabled={analyzing}
                 onClick={() => fileRef.current?.click()}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-sky-300 bg-sky-50/60 px-4 py-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-info/40 bg-info/10 px-4 py-3 text-sm font-medium text-info transition-colors hover:bg-info/15 disabled:opacity-60"
               >
                 <Camera className="h-4 w-4" />
                 拍摄 / 上传餐食照片
               </button>
             )}
-            {analysisError && <p className="text-xs text-red-500">{analysisError}</p>}
+            {analysisError && <p className="break-words text-xs text-destructive">{analysisError}</p>}
           </div>
 
           {/* AI 进食顺序建议 */}
           {sequenceAdvice && (
-            <div className="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800">
-              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-500" />
-              <span>
+            <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3 text-xs text-info">
+              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" />
+              <span className="min-w-0 break-words">
                 <span className="font-semibold">进食顺序建议：</span>
                 {sequenceAdvice}
               </span>
@@ -412,17 +412,17 @@ export function MealLogDialog({
           {nutrition && (
             <div className="space-y-1.5">
               <Label>热量与宏量营养素 (AI 估算，可修正)</Label>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-3 gap-2 xs:grid-cols-5">
                 {NUTRITION_FIELDS.map((f) => (
                   <div key={String(f.key)}>
-                    <div className="mb-1 text-center text-[10px] text-muted-foreground">
+                    <div className="mb-1 text-center text-xs font-medium text-muted-foreground">
                       {f.label}
                     </div>
                     <Input
                       type="number"
                       inputMode="decimal"
                       min="0"
-                      className="h-8 px-1 text-center text-xs"
+                      className="h-9 px-1 text-center text-xs tabular"
                       value={nutrition[f.key] ?? 0}
                       onChange={(e) =>
                         setNutrition((n) =>
@@ -432,7 +432,7 @@ export function MealLogDialog({
                         )
                       }
                     />
-                    <div className="mt-0.5 text-center text-[9px] text-muted-foreground">
+                    <div className="mt-0.5 text-center text-xs text-muted-foreground">
                       {f.unit}
                     </div>
                   </div>
@@ -528,7 +528,7 @@ export function MealLogDialog({
               </p>
             )}
             {textEstimateError && !textEstimating && (
-              <p className="text-xs text-red-500">{textEstimateError}</p>
+              <p className="break-words text-xs text-destructive">{textEstimateError}</p>
             )}
           </div>
 
@@ -551,10 +551,10 @@ export function MealLogDialog({
 
         {mode === "log" && (
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={handleSave}>
+          <Button className="w-full sm:w-auto" onClick={handleSave}>
             <Check className="h-4 w-4" />
             {prefill?.id ? "保存修改" : "完成打卡"}
           </Button>

@@ -145,7 +145,7 @@ export function AuthModal({
                     className={cn(
                       "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
                       mode === t.key
-                        ? "bg-card text-foreground shadow-sm"
+                        ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -180,9 +180,13 @@ export function AuthModal({
                 />
               </div>
 
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && (
+                <p className="break-words rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
 
-              <Button className="w-full" onClick={handleSubmit} disabled={submitting}>
+              <Button className="h-11 w-full sm:w-auto" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : mode === "login" ? (
@@ -198,7 +202,7 @@ export function AuthModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <BadgeCheck className="h-5 w-5 text-emerald-500" />
+                <BadgeCheck className="h-5 w-5 text-success" />
                 登录成功
               </DialogTitle>
               <DialogDescription>
@@ -206,11 +210,15 @@ export function AuthModal({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-lg border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+            <div className="break-words rounded-lg border border-info/20 bg-info/10 p-3 text-xs leading-relaxed text-foreground">
               合并规则：按记录 ID 去重、时间新者胜，本地与云端数据互不覆盖丢失。
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && (
+              <p className="break-words rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
 
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={finish} disabled={migrating}>

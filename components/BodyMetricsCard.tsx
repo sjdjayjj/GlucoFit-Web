@@ -77,8 +77,8 @@ function DeltaChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-0.5 text-[11px] font-medium",
-        improved ? "text-emerald-600" : "text-red-500"
+        "inline-flex items-center gap-0.5 text-[11px] font-medium tabular",
+        improved ? "text-success" : "text-destructive"
       )}
     >
       {delta < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
@@ -129,7 +129,7 @@ export function BodyMetricsCard() {
                       <Icon className="h-3.5 w-3.5" />
                       {m.label}
                     </div>
-                    <div className="mt-1 text-2xl font-semibold tabular-nums">
+                    <div className="mt-1 text-2xl font-semibold tabular">
                       {fmtNum(value, m.digits)}
                       <span className="ml-0.5 text-sm font-normal text-muted-foreground">{m.unit}</span>
                     </div>
@@ -154,12 +154,12 @@ export function BodyMetricsCard() {
                 const value = latest[m.key];
                 return (
                   <div key={m.key} className="flex items-center gap-2.5 rounded-lg border p-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-info/10 text-info">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[11px] text-muted-foreground">{m.label}</div>
-                      <div className="text-sm font-semibold tabular-nums">
+                      <div className="text-sm font-semibold tabular">
                         {value != null ? `${fmtNum(value, m.digits)} ${m.unit}` : "—"}
                       </div>
                     </div>
@@ -175,10 +175,10 @@ export function BodyMetricsCard() {
                   <div
                     key={insight.id}
                     className={cn(
-                      "rounded-lg border p-3 text-xs",
-                      insight.tone === "good" && "border-emerald-200 bg-emerald-50 text-emerald-800",
-                      insight.tone === "warn" && "border-amber-200 bg-amber-50 text-amber-800",
-                      insight.tone === "info" && "border-sky-200 bg-sky-50 text-sky-800"
+                      "rounded-lg border p-3 text-xs leading-relaxed break-words",
+                      insight.tone === "good" && "border-success/30 bg-success/10 text-success",
+                      insight.tone === "warn" && "border-warning/30 bg-warning/10 text-warning",
+                      insight.tone === "info" && "border-info/30 bg-info/10 text-info"
                     )}
                   >
                     <span className="font-semibold">{insight.title}：</span>

@@ -133,7 +133,7 @@ export function ExerciseLogDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Dumbbell className="h-5 w-5 text-primary" />
@@ -156,10 +156,10 @@ export function ExerciseLogDialog({
                   type="button"
                   onClick={() => set({ category: c })}
                   className={cn(
-                    "rounded-lg border px-3 py-2 text-left transition-colors",
+                    "min-h-10 rounded-lg border px-3 py-2 text-left transition-colors",
                     form.category === c
                       ? "border-primary bg-primary/10"
-                      : "bg-card hover:bg-muted"
+                      : "border-border bg-card hover:bg-muted"
                   )}
                 >
                   <div
@@ -262,7 +262,7 @@ export function ExerciseLogDialog({
                   type="button"
                   onClick={() => toggleFeel(tag)}
                   className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                    "flex min-h-10 items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
                     form.muscleFeel.includes(tag)
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-input bg-card text-muted-foreground hover:bg-muted"
@@ -285,14 +285,14 @@ export function ExerciseLogDialog({
             />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="break-words text-sm text-destructive">{error}</p>}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={handleSave}>保存记录</Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave}>保存记录</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

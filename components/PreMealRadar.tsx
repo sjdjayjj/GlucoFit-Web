@@ -99,15 +99,14 @@ export function PreMealRadar() {
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onClick={() => fileRef.current?.click()}
           >
-            <Camera className="h-3.5 w-3.5" />
+            <Camera className="h-4 w-4" />
             {imageUrl ? "已附照片 · 重新选择" : "拍照 / 上传菜单"}
           </Button>
           {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="菜单" className="h-10 w-10 rounded object-cover" />
+            <img src={imageUrl} alt="菜单" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
           )}
         </div>
       </div>
@@ -121,7 +120,7 @@ export function PreMealRadar() {
         {analyzing ? "AI 正在扫雷排雷…" : "生成排雷分析与战术剧本"}
       </Button>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs leading-relaxed break-words text-destructive">{error}</p>}
 
       {/* 排雷结果 */}
       {result && (
@@ -130,24 +129,24 @@ export function PreMealRadar() {
           <div className="grid grid-cols-1 gap-2">
             <RadarZone
               tone="safe"
-              icon={<ShieldCheck className="h-4 w-4 text-emerald-500" />}
+              icon={<ShieldCheck className="h-4 w-4 text-success" />}
               title="稳糖安全区"
               items={result.safeFoods}
-              itemClass="bg-emerald-50 text-emerald-800 border-emerald-200"
+              itemClass="bg-success/10 text-success border-success/30"
             />
             <RadarZone
               tone="warn"
-              icon={<Sparkles className="h-4 w-4 text-amber-500" />}
+              icon={<Sparkles className="h-4 w-4 text-warning" />}
               title="隐藏刺客区"
               items={result.hiddenThreats}
-              itemClass="bg-amber-50 text-amber-800 border-amber-200"
+              itemClass="bg-warning/10 text-warning border-warning/30"
             />
             <RadarZone
               tone="bad"
-              icon={<ShieldAlert className="h-4 w-4 text-red-500" />}
+              icon={<ShieldAlert className="h-4 w-4 text-destructive" />}
               title="胰岛素炸弹"
               items={result.insulinBombs}
-              itemClass="bg-red-50 text-red-700 border-red-200"
+              itemClass="bg-destructive/10 text-destructive border-destructive/30"
             />
           </div>
 
@@ -157,8 +156,8 @@ export function PreMealRadar() {
               <Utensils className="h-4 w-4" />
               主食建议
             </span>
-            <span className="text-xs text-muted-foreground">
-              <span className="text-base font-bold text-foreground">
+            <span className="text-xs tabular text-muted-foreground">
+              <span className="text-base font-semibold tabular text-foreground">
                 {Math.min(result.stapleFist, carbFistLimit)}
               </span>{" "}
               拳 ≈ {result.stapleGrams}g
@@ -168,22 +167,22 @@ export function PreMealRadar() {
 
           {/* 10 秒战术剧本 */}
           {result.script.length > 0 && (
-            <div className="space-y-1.5 rounded-lg border border-sky-200 bg-sky-50 p-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-800">
+            <div className="space-y-1.5 rounded-lg border border-info/30 bg-info/10 p-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-info">
                 <Radar className="h-3.5 w-3.5" />
                 10 秒进食战术剧本
               </div>
               <ol className="space-y-1.5">
                 {result.script.map((line, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-sky-900">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white">
+                  <li key={i} className="flex items-start gap-2 text-xs leading-relaxed break-words text-foreground">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-info text-[10px] font-bold text-background">
                       {i + 1}
                     </span>
                     {line}
                   </li>
                 ))}
               </ol>
-              <p className="flex items-center gap-1 pt-1 text-[11px] text-sky-600">
+              <p className="flex items-center gap-1 pt-1 text-[11px] leading-relaxed break-words text-info">
                 <CircleCheck className="h-3 w-3" />
                 开吃吧！吃完后回到「餐后打卡」页记录行为与反应即可。
               </p>

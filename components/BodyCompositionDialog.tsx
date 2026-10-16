@@ -105,7 +105,7 @@ export function BodyCompositionDialog({
     <div key={field.key} className="space-y-1.5">
       <Label htmlFor={`body-${field.key}`}>
         {field.label}
-        {field.required && <span className="text-red-500"> *</span>}
+        {field.required && <span className="text-destructive"> *</span>}
         {field.unit && (
           <span className="ml-1 text-xs font-normal text-muted-foreground">({field.unit})</span>
         )}
@@ -185,14 +185,14 @@ export function BodyCompositionDialog({
             />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="break-words text-sm text-destructive">{error}</p>}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={handleSave}>保存记录</Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave}>保存记录</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

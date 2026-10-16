@@ -48,10 +48,10 @@ function BudgetBar({
     <div>
       <div className="mb-1.5 flex items-center justify-between text-xs">
         <span className="flex items-center gap-1.5 font-medium">
-          <Icon className={cn("h-3.5 w-3.5", over && overWarn ? "text-red-500" : "text-primary")} />
+          <Icon className={cn("h-3.5 w-3.5", over && overWarn ? "text-destructive" : "text-primary")} />
           {label}
         </span>
-        <span className={cn("tabular-nums", over && overWarn ? "font-semibold text-red-500" : "text-muted-foreground")}>
+        <span className={cn("tabular", over && overWarn ? "font-semibold text-destructive" : "text-muted-foreground")}>
           {Math.round(value)} / {Math.round(max)} {unit}
         </span>
       </div>
@@ -59,7 +59,7 @@ function BudgetBar({
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            over && overWarn ? "bg-red-400" : pct > 80 ? "bg-amber-400" : "bg-primary"
+            over && overWarn ? "bg-destructive" : pct > 80 ? "bg-warning" : "bg-primary"
           )}
           style={{ width: `${pct}%` }}
         />
@@ -143,7 +143,7 @@ export function MealPlanner({
 
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0">
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-2 space-y-0">
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2">
             <ChefHat className="h-5 w-5 text-primary" />
@@ -162,7 +162,7 @@ export function MealPlanner({
               type="button"
               onClick={() => setActivityFactor(a.value)}
               className={cn(
-                "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                "min-h-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 activityFactor === a.value
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -195,7 +195,7 @@ export function MealPlanner({
                 overWarn
               />
               {todaySummary.refinedExposureCount > 0 && (
-                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-amber-600">
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-warning break-words">
                   <TriangleAlert className="h-3 w-3" />
                   今日已有 {todaySummary.refinedExposureCount} 次精制碳水暴露
                 </p>
@@ -232,12 +232,12 @@ export function MealPlanner({
                   : "AI 生成今日控糖三餐"}
             </Button>
             {!configured && (
-              <Button variant="ghost" size="sm" onClick={onOpenSettings}>
+              <Button variant="ghost" onClick={onOpenSettings}>
                 <Settings2 className="h-4 w-4" />
                 前往配置 AI
               </Button>
             )}
-            {error && <span className="text-xs text-red-500">{error}</span>}
+            {error && <span className="text-xs leading-relaxed break-words text-destructive">{error}</span>}
           </div>
         </div>
 
@@ -258,18 +258,17 @@ export function MealPlanner({
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   碳水 {Math.round(rec.macros.carbs)}g · 蛋白 {Math.round(rec.macros.protein)}g · 脂肪 {Math.round(rec.macros.fat)}g
                 </p>
-                <p className="mt-2 flex-1 text-xs text-muted-foreground">
+                <p className="mt-2 flex-1 text-xs leading-relaxed break-words text-muted-foreground">
                   <span className="font-medium text-foreground">食材：</span>
                   {Array.isArray(rec.ingredients) ? rec.ingredients.join("、") : rec.ingredients}
                 </p>
-                <p className="mt-2 rounded-md bg-sky-50 p-2 text-[11px] text-sky-800">
-                  <span className="font-semibold">顺序：</span>
+                <p className="mt-2 rounded-md border border-info/20 bg-info/10 p-2 text-[11px] leading-relaxed break-words text-foreground">
+                  <span className="font-semibold text-info">顺序：</span>
                   {rec.recommendedSequence}
                 </p>
                 <Button
-                  size="sm"
                   variant="outline"
-                  className="mt-2.5"
+                  className="mt-2.5 w-full"
                   onClick={() => onAdopt(rec)}
                 >
                   <Sparkles className="h-3.5 w-3.5" />

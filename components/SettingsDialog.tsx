@@ -187,7 +187,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5 text-primary" />
@@ -198,12 +198,12 @@ export function SettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* ============ 代谢初始档案 ============ */}
-          <section className="space-y-2">
+          <section className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
             <h3 className="text-sm font-semibold text-foreground">代谢初始档案</h3>
-            <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
-              <span className="text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3">
+              <span className="min-w-0 flex-1 break-words text-xs leading-relaxed text-muted-foreground">
                 {profile
                   ? `${profile.gender === "male" ? "男" : "女"} · ${profile.heightCm} cm · 初始 ${profile.initialWeightKg} kg → 目标 ${profile.targetWeightKg} kg`
                   : "尚未建档：身高/初始体重/目标是 BMI、TDEE 与里程碑的计算基准"}
@@ -224,11 +224,9 @@ export function SettingsDialog({
             </div>
           </section>
 
-          <div className="border-t" />
-
           {/* ============ v3.0 工作日/周末双模引擎 ============ */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
+          <section className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
+            <div className="flex min-h-10 items-center justify-between gap-3 py-2">
               <h3 className="text-sm font-semibold text-foreground">周期双模引擎</h3>
               <Switch
                 checked={scheduleForm.enabled}
@@ -242,7 +240,7 @@ export function SettingsDialog({
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>工作日协议（严格）</Label>
-                  <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+                  <div className="flex gap-1 rounded-lg border bg-background p-1">
                     {(["16:8", "18:6"] as const).map((p) => (
                       <button
                         key={p}
@@ -262,7 +260,7 @@ export function SettingsDialog({
                 </div>
                 <div className="space-y-1.5">
                   <Label>周末协议（弹性）</Label>
-                  <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+                  <div className="flex gap-1 rounded-lg border bg-background p-1">
                     {(["14:10", "12:12", "flexible"] as const).map((p) => (
                       <button
                         key={p}
@@ -284,10 +282,8 @@ export function SettingsDialog({
             )}
           </section>
 
-          <div className="border-t" />
-
           {/* ============ AI 模型设置 ============ */}
-          <section className="space-y-4">
+          <section className="space-y-4 rounded-xl border border-border/60 bg-muted/30 p-4">
             <h3 className="text-sm font-semibold text-foreground">AI 模型 (BYOK)</h3>
 
             <div className="space-y-1.5">
@@ -379,8 +375,8 @@ export function SettingsDialog({
               )}
             </datalist>
 
-            <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
-              <div className="space-y-0.5">
+            <div className="flex min-h-10 items-center justify-between gap-3 rounded-lg border bg-background p-3">
+              <div className="space-y-0.5 break-words">
                 <Label htmlFor="ai-deep-thinking">深度思考模式</Label>
                 <p className="text-xs text-muted-foreground">
                   开启后请求携带 enable_thinking 参数（Qwen3 / SiliconFlow
@@ -394,8 +390,8 @@ export function SettingsDialog({
               />
             </div>
 
-            <div className="rounded-lg border bg-muted/40 p-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="rounded-lg border bg-background p-3">
+              <div className="flex min-h-10 flex-wrap items-center justify-between gap-3">
                 <span className="text-xs text-muted-foreground">一键 Ping 验证 API 可用性</span>
                 <Button variant="outline" size="sm" onClick={handleTest} disabled={aiTest.loading}>
                   {aiTest.loading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -406,7 +402,11 @@ export function SettingsDialog({
             </div>
           </section>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <p className="break-words rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
         </div>
 
         <DialogFooter>
@@ -429,8 +429,8 @@ function AsyncMessage({ state }: { state: AsyncState }) {
   return (
     <p
       className={cn(
-        "mt-2 flex items-center gap-1 text-xs font-medium",
-        state.ok ? "text-emerald-600" : "text-red-500"
+        "mt-2 flex items-start gap-1 break-words text-xs font-medium",
+        state.ok ? "text-success" : "text-destructive"
       )}
     >
       {state.ok && <BadgeCheck className="h-3.5 w-3.5" />}

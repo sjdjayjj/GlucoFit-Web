@@ -75,7 +75,7 @@ export function FastingTracker() {
   }, [now, startHour, windowHours]);
 
   const progress = Math.min(1, Math.max(0, phase.progress));
-  const strokeColor = phase.eating ? "#10b981" : "#0ea5e9";
+  const strokeColor = phase.eating ? "stroke-success" : "stroke-info";
 
   return (
     <Card className="flex flex-col">
@@ -92,7 +92,7 @@ export function FastingTracker() {
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
                   isWeekendMode
-                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    ? "border-warning/30 bg-warning/10 text-warning"
                     : "border-primary/20 bg-primary/5 text-primary"
                 )}
               >
@@ -108,13 +108,13 @@ export function FastingTracker() {
         {/* 进度环 */}
         <div className="relative">
           <svg width={150} height={150} viewBox="0 0 150 150" className="-rotate-90">
-            <circle cx="75" cy="75" r={RING_RADIUS} fill="none" stroke="#e2e8f0" strokeWidth={10} />
+            <circle cx="75" cy="75" r={RING_RADIUS} fill="none" className="stroke-muted" strokeWidth={10} />
             <circle
               cx="75"
               cy="75"
               r={RING_RADIUS}
               fill="none"
-              stroke={strokeColor}
+              className={strokeColor}
               strokeWidth={10}
               strokeLinecap="round"
               strokeDasharray={RING_CIRCUMFERENCE}
@@ -124,14 +124,14 @@ export function FastingTracker() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {phase.eating ? (
-              <Utensils className="h-5 w-5 text-emerald-500" />
+              <Utensils className="h-5 w-5 text-success" />
             ) : (
-              <Waves className="h-5 w-5 text-sky-500" />
+              <Waves className="h-5 w-5 text-info" />
             )}
             <div
               className={cn(
                 "mt-1 text-sm font-semibold",
-                phase.eating ? "text-emerald-600" : "text-sky-600"
+                phase.eating ? "text-success" : "text-info"
               )}
             >
               {phase.eating ? "进食窗口" : "低胰岛素消脂维护期"}
@@ -166,7 +166,7 @@ export function FastingTracker() {
                   type="button"
                   onClick={() => updateGoal({ fastingProtocol: p })}
                   className={cn(
-                    "flex-1 rounded-md px-1 py-1.5 text-xs font-medium transition-colors",
+                    "flex-1 rounded-md px-1 py-1.5 text-xs font-medium transition-colors min-h-10",
                     goal.fastingProtocol === p
                       ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"

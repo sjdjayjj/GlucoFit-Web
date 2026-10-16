@@ -178,8 +178,8 @@ export function MealVoiceInput({
           onClick={listening ? stopListening : startListening}
           disabled={parsing}
           className={cn(
-            "shrink-0",
-            listening && "border-red-300 bg-red-50 text-red-600"
+            "h-10 shrink-0",
+            listening && "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15"
           )}
         >
           {parsing ? (
@@ -193,8 +193,8 @@ export function MealVoiceInput({
         </Button>
         <span
           className={cn(
-            "text-[11px] text-muted-foreground",
-            listening && "animate-pulse text-red-500"
+            "min-w-0 break-words text-[11px] text-muted-foreground",
+            listening && "animate-pulse text-destructive"
           )}
         >
           {listening
@@ -204,13 +204,13 @@ export function MealVoiceInput({
       </div>
 
       {transcript && (
-        <div className="flex items-start gap-1.5 rounded-lg border border-sky-200 bg-sky-50 p-2 text-xs text-sky-800">
-          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-500" />
-          <span className="leading-snug">{transcript}</span>
+        <div className="flex items-start gap-1.5 rounded-lg border border-info/30 bg-info/10 p-2 text-xs text-info">
+          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" />
+          <span className="min-w-0 break-words leading-snug">{transcript}</span>
         </div>
       )}
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="break-words text-xs text-destructive">{error}</p>}
     </div>
   );
 }

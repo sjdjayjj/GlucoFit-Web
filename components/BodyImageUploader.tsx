@@ -64,7 +64,7 @@ export function BodyImageUploader({
         disabled={recognizing}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-emerald-300 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60"
+          "flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-success/40 bg-success/10 px-4 py-3 text-sm font-medium text-success transition-colors hover:bg-success/15 disabled:opacity-60"
         )}
       >
         {recognizing ? (
@@ -89,7 +89,7 @@ export function BodyImageUploader({
             className="h-12 w-12 rounded-md border object-cover"
           />
           {success && (
-            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+            <span className="flex items-center gap-1 text-xs font-medium text-success">
               <CheckCircle2 className="h-3.5 w-3.5" />
               识别完成，请核对下方数据
             </span>
@@ -97,7 +97,7 @@ export function BodyImageUploader({
         </div>
       )}
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="break-words text-xs text-destructive">{error}</p>}
     </div>
   );
 }

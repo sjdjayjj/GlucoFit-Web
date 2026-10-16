@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { AIDiagnosisCard } from "@/components/AIDiagnosisCard";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthModal } from "@/components/AuthModal";
 import { BodyMetricsCard } from "@/components/BodyMetricsCard";
 import { BodyCompositionDialog } from "@/components/BodyCompositionDialog";
@@ -102,8 +103,10 @@ export default function Home() {
   if (!mounted) {
     // 避免 Zustand persist 在 SSR 水合时产生不匹配
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Activity className="h-8 w-8 animate-pulse text-primary" />
+      <div className="flex min-h-dvh items-center justify-center">
+        <div className="flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-brand-gradient shadow-xl">
+          <Activity className="h-8 w-8 text-white" />
+        </div>
       </div>
     );
   }
@@ -177,17 +180,19 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* 顶栏 */}
-      <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-6">
+    <div className="min-h-dvh">
+      {/* 顶栏：玻璃拟态 + 安全区适配 */}
+      <header className="glass sticky top-0 z-40 border-b border-border/60 shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] md:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-md">
               <Activity className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-base font-bold leading-tight">GlucoFit</h1>
-              <p className="text-[11px] text-muted-foreground">
+              <h1 className="text-base font-bold leading-tight tracking-tight">
+                <span className="text-gradient-brand">GlucoFit</span>
+              </h1>
+              <p className="hidden text-[11px] text-muted-foreground xs:block">
                 代谢自动驾驶 · Metabolic Autopilot v3.0
               </p>
             </div>
@@ -220,13 +225,14 @@ export default function Home() {
                 <span className="hidden md:inline">同步</span>
               </Button>
             )}
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
               title="设置"
               onClick={() => setSettingsOpen(true)}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-[18px] w-[18px]" />
             </Button>
 
             {/* 账户状态 */}
@@ -235,7 +241,7 @@ export default function Home() {
                 <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={user.email}>
                   {user.email}
                 </span>
-                <Button variant="ghost" size="icon" className="h-7 w-7" title="退出登录" onClick={handleSignOut}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" title="退出登录" onClick={handleSignOut}>
                   <LogOut className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -250,22 +256,22 @@ export default function Home() {
       </header>
 
       {/* 仪表盘：移动端单列，md+ 双列网格 */}
-      <main className="mx-auto max-w-7xl p-4 md:p-6">
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-4 md:px-6 md:pb-24 md:pt-6">
         {/* 减重里程碑条（建档后常驻顶部） */}
         {profile && (
-          <div className="mb-5">
+          <div className="mb-4 animate-fade-up md:mb-5">
             <MilestoneBar />
           </div>
         )}
 
         {/* v3.0 核心：虚拟血糖/胰岛素潮汐引擎（代谢数字孪生） */}
-        <div className="mb-6">
+        <div className="mb-4 animate-fade-up md:mb-6">
           <VirtualMetabolicWave />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
           {/* 左列：代谢监控与即时状态 */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 md:gap-6">
             <FastingTracker />
             <EnergyBalanceCard />
 
@@ -313,14 +319,14 @@ export default function Home() {
           </div>
 
           {/* 右列：体征趋势与智能分析 */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 md:gap-6">
             <BodyMetricsCard />
             <AIDiagnosisCard />
             <CompositionCharts />
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+        <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
           控糖理念：进食顺序 蔬菜 → 蛋白脂肪 → 慢碳 · 餐后 30 分钟内激活肌肉泵（散步 / 提踵）· 热量赤字 300-500 kcal · 关注脂肪量下降与蛋白质量维持
         </p>
       </main>
@@ -336,10 +342,10 @@ export default function Home() {
       {/* 同步结果轻提示 */}
       {toast && (
         <div
-          className={`fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-sm shadow-lg ${
+          className={`fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex max-w-[92vw] -translate-x-1/2 animate-fade-up items-center gap-2 rounded-full border px-4 py-2.5 text-sm shadow-lg ${
             toast.ok
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-600"
+              ? "border-emerald-300/50 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300"
+              : "border-red-300/50 bg-red-50 text-red-600 dark:bg-red-950/70 dark:text-red-300"
           }`}
         >
           {toast.message}

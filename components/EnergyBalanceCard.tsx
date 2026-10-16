@@ -55,7 +55,7 @@ export function EnergyBalanceCard() {
       : inDeficit
         ? Math.min(1, deficit / TARGET_DEFICIT)
         : Math.min(1, intake / (tdee! + activeBurn || 1));
-  const strokeColor = net == null ? "#cbd5e1" : inDeficit ? "#10b981" : "#f59e0b";
+  const strokeColor = net == null ? "stroke-muted-foreground/30" : inDeficit ? "stroke-success" : "stroke-warning";
 
   const centerLabel =
     net == null
@@ -80,7 +80,7 @@ export function EnergyBalanceCard() {
 
       <CardContent className="flex flex-1 flex-col gap-4">
         {baseline == null && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-700">
+          <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-[11px] leading-relaxed text-warning break-words">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             暂无代谢基准：请完成初始档案建档或录入一次体脂秤数据，即可计算 BMR/TDEE 与净热量平衡。
           </div>
@@ -90,13 +90,13 @@ export function EnergyBalanceCard() {
           {/* 收支环 */}
           <div className="relative shrink-0">
             <svg width={130} height={130} viewBox="0 0 130 130" className="-rotate-90">
-              <circle cx="65" cy="65" r={RING_RADIUS} fill="none" stroke="#e2e8f0" strokeWidth={10} />
+              <circle cx="65" cy="65" r={RING_RADIUS} fill="none" className="stroke-muted" strokeWidth={10} />
               <circle
                 cx="65"
                 cy="65"
                 r={RING_RADIUS}
                 fill="none"
-                stroke={strokeColor}
+                className={strokeColor}
                 strokeWidth={10}
                 strokeLinecap="round"
                 strokeDasharray={RING_CIRCUMFERENCE}
@@ -111,8 +111,8 @@ export function EnergyBalanceCard() {
                   net == null
                     ? "text-muted-foreground"
                     : inDeficit
-                      ? "text-emerald-600"
-                      : "text-amber-600"
+                      ? "text-success"
+                      : "text-warning"
                 )}
               >
                 {centerLabel}
@@ -136,7 +136,7 @@ export function EnergyBalanceCard() {
         </div>
 
         {activeBurn > OVERBURN_WARN_KCAL && (
-          <p className="flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-700">
+          <p className="flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-[11px] leading-relaxed text-warning break-words">
             <Flame className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             今日运动消耗已超 {OVERBURN_WARN_KCAL} kcal，注意热量补给与睡眠，防范剧烈代偿性食欲（反跳性碳水渴望）。
           </p>
@@ -165,7 +165,7 @@ export function EnergyBalanceCard() {
                     <div className="flex items-center gap-1.5 text-xs font-medium">
                       {EXERCISE_CATEGORY_LABEL[l.category]}
                       {l.isPostMeal && (
-                        <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                        <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-medium text-success">
                           餐后
                         </span>
                       )}
@@ -175,16 +175,16 @@ export function EnergyBalanceCard() {
                       {l.muscleFeel?.length ? ` · ${l.muscleFeel.join("/")}` : ""}
                     </div>
                   </div>
-                  <span className="text-xs font-semibold tabular-nums text-sky-600">
+                  <span className="text-xs font-semibold tabular text-info">
                     {Math.round(l.caloriesBurned)} kcal
                   </span>
                   <button
                     type="button"
                     onClick={() => deleteExerciseLog(l.id)}
-                    className="text-muted-foreground transition-colors hover:text-red-500"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
                     aria-label="删除运动记录"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               ))}
@@ -212,8 +212,8 @@ function StatRow({
       <span className="truncate text-[11px] text-muted-foreground">{label}</span>
       <span
         className={cn(
-          "text-sm font-semibold tabular-nums",
-          accent ? "text-sky-600" : "text-foreground"
+          "text-sm font-semibold tabular",
+          accent ? "text-info" : "text-foreground"
         )}
       >
         {value == null ? "—" : value}

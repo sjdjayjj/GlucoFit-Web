@@ -111,9 +111,27 @@ export function VirtualMetabolicWave() {
 
   const nowLabel = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
+  const levelDot =
+    currentLevel.glucoseLevel === "spike"
+      ? "bg-red-400"
+      : currentLevel.glucoseLevel === "crash"
+        ? "bg-amber-400"
+        : currentLevel.glucoseLevel === "moderate"
+          ? "bg-sky-300"
+          : "bg-emerald-400";
+
   return (
-    <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-[#0F4C81] via-[#1e3a5f] to-[#122a44] text-white">
-      <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+    <Card className="relative overflow-hidden border-sky-900/40 bg-[linear-gradient(135deg,#081C33_0%,#0F3D6B_45%,#1B2A5E_75%,#2A1E52_100%)] text-white shadow-lg">
+      {/* 装饰光晕：营造「驾驶舱」纵深感 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-28 -left-10 h-56 w-56 rounded-full bg-violet-500/15 blur-3xl"
+      />
+      <CardHeader className="relative flex-row flex-wrap items-start justify-between gap-2 space-y-0 pb-2">
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-white">
             <Waves className="h-5 w-5 text-sky-300" />
@@ -124,12 +142,19 @@ export function VirtualMetabolicWave() {
           </CardDescription>
         </div>
         <div className="flex items-center gap-1.5 rounded-full border border-sky-300/30 bg-sky-400/10 px-2.5 py-1 text-[11px] font-medium text-sky-200">
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              levelDot,
+              currentLevel.glucoseLevel === "spike" && "animate-pulse"
+            )}
+          />
           <Activity className="h-3 w-3" />
           当前 {nowLabel} · {levelLabel(currentLevel.glucoseLevel)}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="relative space-y-3">
         {/* 反应性低血糖提前预警 */}
         {projectedCrash && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-300/40 bg-amber-400/15 p-2.5 text-xs text-amber-100">
@@ -171,8 +196,9 @@ export function VirtualMetabolicWave() {
         )}
 
         {/* 双波浪潮汐图 */}
-        <div className="rounded-lg bg-[#0b1c30]/60 p-2 pt-3">
-          <ResponsiveContainer width="100%" height={220}>
+        <div className="rounded-xl bg-[#0b1c30]/60 p-2 pt-3 ring-1 ring-inset ring-white/5">
+          <div className="h-[200px] sm:h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 4, right: 6, bottom: 0, left: -18 }}>
               <defs>
                 <linearGradient id="glucoseFill" x1="0" y1="0" x2="0" y2="1">
@@ -318,6 +344,7 @@ export function VirtualMetabolicWave() {
               />
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-2 pb-1 text-[10px] text-sky-200/60">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-sm bg-sky-300" /> 血糖 (mg/dL) · 蓝潮

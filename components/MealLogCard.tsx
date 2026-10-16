@@ -19,8 +19,15 @@ import {
   type MealLog,
   type MealType,
 } from "@/types";
-import { getScoreTone, SCORE_TONE_CLASS } from "@/lib/scoring";
+import { getScoreTone, type ScoreTone } from "@/lib/scoring";
 import { cn, shortTime } from "@/lib/utils";
+
+/** 稳糖分徽章配色：语义 token，双主题可读 */
+const SCORE_BADGE_CLASS: Record<ScoreTone, string> = {
+  good: "border-success/30 bg-success/10 text-success",
+  warn: "border-warning/30 bg-warning/10 text-warning",
+  bad: "border-destructive/30 bg-destructive/10 text-destructive",
+};
 
 const MEAL_TYPE_ICON: Record<MealType, React.ComponentType<{ className?: string }>> = {
   breakfast: Sunrise,
@@ -30,9 +37,9 @@ const MEAL_TYPE_ICON: Record<MealType, React.ComponentType<{ className?: string 
 };
 
 const ENERGY_REACTION_CLASS: Record<EnergyReaction, string> = {
-  energetic: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  normal: "border-slate-200 bg-slate-50 text-slate-600",
-  food_coma: "border-red-200 bg-red-50 text-red-600",
+  energetic: "border-success/30 bg-success/10 text-success",
+  normal: "border-border bg-muted text-muted-foreground",
+  food_coma: "border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 function BehaviorBadge({ ok, okText, badText }: { ok: boolean; okText: string; badText: string }) {
@@ -41,8 +48,8 @@ function BehaviorBadge({ ok, okText, badText }: { ok: boolean; okText: string; b
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
         ok
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-slate-200 bg-slate-100 text-slate-500"
+          ? "border-success/30 bg-success/10 text-success"
+          : "border-border bg-muted text-muted-foreground"
       )}
     >
       {ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
@@ -74,7 +81,7 @@ export function MealLogCard({
   };
 
   return (
-    <div className="rounded-lg border bg-card p-3.5 shadow-sm">
+    <div className="rounded-xl border bg-card p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           {log.imageUrl ? (
@@ -103,9 +110,9 @@ export function MealLogCard({
                   onClick={() => onEdit(log)}
                   title="编辑"
                   aria-label="编辑该餐记录"
-                  className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-4 w-4" />
                 </button>
               )}
               {onDelete &&
@@ -113,7 +120,7 @@ export function MealLogCard({
                   <button
                     type="button"
                     onClick={handleDeleteClick}
-                    className="rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600"
+                    className="flex h-10 items-center rounded-md border border-destructive/30 bg-destructive/10 px-3 text-xs font-medium text-destructive"
                   >
                     确认删除
                   </button>
@@ -123,17 +130,17 @@ export function MealLogCard({
                     onClick={handleDeleteClick}
                     title="删除"
                     aria-label="删除该餐记录"
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
+                    className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 ))}
             </div>
           )}
           <div
             className={cn(
-              "flex h-10 w-10 flex-col items-center justify-center rounded-lg border text-sm font-bold tabular-nums",
-              SCORE_TONE_CLASS[tone]
+              "flex h-10 w-10 flex-col items-center justify-center rounded-lg border text-sm font-bold tabular",
+              SCORE_BADGE_CLASS[tone]
             )}
           >
             {log.score}
@@ -167,15 +174,15 @@ export function MealLogCard({
           {ENERGY_REACTION_LABEL[log.energyReaction]}
         </span>
         {log.satietyDuration && (
-          <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700">
+          <span className="inline-flex items-center rounded-full border border-info/30 bg-info/10 px-2 py-0.5 text-[11px] font-medium text-info">
             抗饿 {SATIETY_DURATION_LABEL[log.satietyDuration]}
           </span>
         )}
       </div>
 
       {log.nutrition && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
-          <span className="font-medium text-foreground">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] tabular text-muted-foreground">
+          <span className="font-semibold text-foreground">
             {Math.round(log.nutrition.calories)} kcal
           </span>
           <span>碳水 {Math.round(log.nutrition.carbsG)}g</span>
@@ -185,7 +192,7 @@ export function MealLogCard({
       )}
 
       {log.foodSummary && (
-        <p className="mt-2 truncate text-xs text-muted-foreground">{log.foodSummary}</p>
+        <p className="mt-2 text-xs leading-relaxed break-words text-muted-foreground">{log.foodSummary}</p>
       )}
     </div>
   );

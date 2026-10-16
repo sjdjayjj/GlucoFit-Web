@@ -21,8 +21,8 @@ export function MilestoneBar() {
     <Card>
       <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:gap-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Flag className="h-4.5 w-4.5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+            <Flag className="h-5 w-5" />
           </div>
           <div className="leading-tight">
             <div className="text-sm font-semibold">
@@ -35,12 +35,12 @@ export function MilestoneBar() {
         </div>
 
         <div className="flex flex-1 flex-col gap-1.5">
-          <div className="flex items-baseline justify-between text-xs">
-            <span className={cn("flex items-center gap-1 font-semibold", lost ? "text-emerald-600" : "text-amber-600")}>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-xs">
+            <span className={cn("flex items-center gap-1 font-semibold", lost ? "text-success" : "text-warning")}>
               <TrendingDown className={cn("h-3.5 w-3.5", !lost && "rotate-180")} />
               {lost ? "已减" : "较初始"} {Math.abs(m.lostKg).toFixed(1)} kg
             </span>
-            <span className="font-semibold tabular-nums">
+            <span className="font-semibold tabular text-foreground">
               当前 {m.currentWeightKg.toFixed(1)} kg
             </span>
             <span className="text-muted-foreground">
@@ -51,12 +51,12 @@ export function MilestoneBar() {
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-700",
-                m.achieved ? "bg-sky-500" : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                m.achieved ? "bg-info" : "bg-gradient-to-r from-emerald-500 to-emerald-400"
               )}
               style={{ width: `${Math.max(2, m.progressPct)}%` }}
             />
           </div>
-          <div className="text-right text-[11px] font-medium tabular-nums text-muted-foreground">
+          <div className="text-right text-[11px] font-medium tabular text-muted-foreground">
             总进度 {m.progressPct.toFixed(0)}%
           </div>
         </div>

@@ -2,29 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   GlucoFit Design System v4 · "Clinical Cobalt"
+   电光钴蓝 → 紫罗兰品牌渐变，呼应「血糖蓝潮 / 胰岛素紫潮」数据叙事。
+   双主题（light / dark）全部经由 CSS 变量驱动，组件层只消费语义 token。
+   ============================================================ */
+
 @layer base {
   :root {
-    /* v3.0 Classic Blue（#0F4C81）主题：理性、静谧与高代谢自控力 */
-    --background: 210 45% 97%;
-    --foreground: 222 47% 11%;
+    --background: 214 36% 98%;
+    --foreground: 222 52% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222 52% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 208 79% 28%;
+    --popover-foreground: 222 52% 12%;
+    --primary: 213 82% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 94%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 94%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 208 60% 94%;
-    --accent-foreground: 208 79% 28%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 208 79% 28%;
-    --radius: 0.75rem;
+    --secondary: 214 32% 95%;
+    --secondary-foreground: 222 47% 20%;
+    --muted: 214 30% 94%;
+    --muted-foreground: 218 14% 46%;
+    --accent: 213 65% 94%;
+    --accent-foreground: 213 82% 30%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 66% 36%;
+    --warning: 34 92% 44%;
+    --info: 199 86% 42%;
+    --border: 216 24% 90%;
+    --input: 216 24% 88%;
+    --ring: 213 82% 38%;
+    --radius: 1rem;
+
+    /* 品牌渐变与阴影着色（dark 下自动加深） */
+    --brand-gradient: linear-gradient(
+      135deg,
+      hsl(213 82% 38%) 0%,
+      hsl(231 72% 48%) 55%,
+      hsl(258 68% 56%) 100%
+    );
+    --shadow-tint: 222 52% 12%;
+    --ambient-1: 0.07;
+    --ambient-2: 0.06;
+  }
+
+  .dark {
+    --background: 222 44% 7%;
+    --foreground: 210 40% 96%;
+    --card: 222 40% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 42% 9%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 213 88% 62%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 28% 16%;
+    --secondary-foreground: 210 40% 92%;
+    --muted: 222 26% 15%;
+    --muted-foreground: 216 18% 66%;
+    --accent: 213 42% 18%;
+    --accent-foreground: 210 80% 88%;
+    --destructive: 0 68% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 60% 48%;
+    --warning: 38 92% 56%;
+    --info: 199 86% 58%;
+    --border: 222 24% 18%;
+    --input: 222 24% 24%;
+    --ring: 213 88% 62%;
+
+    --shadow-tint: 222 70% 2%;
+    --ambient-1: 0.12;
+    --ambient-2: 0.1;
   }
 }
 
@@ -32,8 +80,101 @@
   * {
     @apply border-border;
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
+    min-height: 100dvh;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 环境光晕：顶部双色径向渐变，为纯色背景注入深度 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+        62% 42% at 12% -4%,
+        hsl(var(--primary) / var(--ambient-1)),
+        transparent 70%
+      ),
+      radial-gradient(
+        48% 36% at 92% 2%,
+        hsl(258 68% 58% / var(--ambient-2)),
+        transparent 70%
+      );
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.24);
+  }
+
+  /* 细滚动条，跟随主题 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* iOS 小屏聚焦时禁止自动放大：触控设备上输入控件 ≥16px */
+  @media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+}
+
+@layer utilities {
+  .text-gradient-brand {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-brand-gradient {
+    background: var(--brand-gradient);
+  }
+
+  /* 安全区工具类（刘海屏 / 圆角屏） */
+  .safe-b {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-t {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .glass {
+    background: hsl(var(--background) / 0.72);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -55,4 +196,16 @@
 
 .animate-breathe {
   animation: breathe 10s ease-in-out infinite;
+}
+
+/* 尊重系统「减弱动态效果」偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

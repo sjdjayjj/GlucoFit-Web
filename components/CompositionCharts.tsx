@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LineChart, Droplets } from "lucide-react";
 import { useSortedBodyRecords } from "@/lib/storage";
 import { analyzeHydration, VERDICT_STYLE } from "@/lib/bodyCompAnalyzer";
+import type { BodyCompAnalysis } from "@/types/v3";
 import { cn, daysAgoDateStr, shortDate } from "@/lib/utils";
 
 type RangeDays = 7 | 30;
@@ -24,6 +25,14 @@ const RANGE_OPTIONS: Array<{ value: RangeDays; label: string }> = [
   { value: 7, label: "近 7 天" },
   { value: 30, label: "近 30 天" },
 ];
+
+/** VERDICT_STYLE 为 lib 层浅色配色，dark 下叠加语义色修正 */
+const VERDICT_DARK_CLASS: Record<BodyCompAnalysis["verdict"], string> = {
+  fat_loss: "dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
+  water_retention: "dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400",
+  glycogen_refill: "dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
+  fat_gain: "dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
+};
 
 export function CompositionCharts() {
   const records = useSortedBodyRecords();
@@ -47,7 +56,7 @@ export function CompositionCharts() {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0">
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-2 space-y-0">
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2">
             <LineChart className="h-5 w-5 text-primary" />
@@ -62,7 +71,7 @@ export function CompositionCharts() {
               type="button"
               onClick={() => setRange(opt.value)}
               className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                "min-h-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 range === opt.value
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -85,8 +94,9 @@ export function CompositionCharts() {
             {hydration && (
               <div
                 className={cn(
-                  "flex items-start gap-2.5 rounded-lg border p-3 text-xs",
-                  VERDICT_STYLE[hydration.verdict].className
+                  "flex items-start gap-2.5 rounded-lg border p-3 text-xs leading-relaxed break-words",
+                  VERDICT_STYLE[hydration.verdict].className,
+                  VERDICT_DARK_CLASS[hydration.verdict]
                 )}
               >
                 <Droplets className="mt-0.5 h-4 w-4 shrink-0" />
@@ -114,15 +124,15 @@ export function CompositionCharts() {
 
             {/* 图表 1：体重 + 体脂率 双轴 */}
             <div>
-              <div className="mb-2 text-sm font-medium">体重 (kg) 与 体脂率 (%) 走势</div>
+              <div className="mb-2 text-xs font-medium text-muted-foreground">体重 (kg) 与 体脂率 (%) 走势</div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
                   <YAxis
                     yAxisId="weight"
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -130,12 +140,18 @@ export function CompositionCharts() {
                     yAxisId="fatRate"
                     orientation="right"
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <Tooltip
-                    contentStyle={{ borderRadius: 8, borderColor: "#e2e8f0", fontSize: 12 }}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid hsl(var(--border))",
+                      backgroundColor: "hsl(var(--popover))",
+                      color: "hsl(var(--foreground))",
+                      fontSize: 12,
+                    }}
                     formatter={(value: number | string, name: string) => [
                       typeof value === "number" ? value.toFixed(1) : value,
                       name === "weight" ? "体重 (kg)" : "体脂率 (%)",
@@ -150,9 +166,9 @@ export function CompositionCharts() {
                     type="monotone"
                     dataKey="weight"
                     name="weight"
-                    stroke="#475569"
+                    stroke="#3b82f6"
                     strokeWidth={2}
-                    dot={{ r: 2.5, fill: "#475569" }}
+                    dot={{ r: 2.5, fill: "#3b82f6" }}
                   />
                   <Line
                     yAxisId="fatRate"
@@ -169,19 +185,25 @@ export function CompositionCharts() {
 
             {/* 图表 2：脂肪量 vs 蛋白质量 */}
             <div>
-              <div className="mb-2 text-sm font-medium">脂肪量 vs 蛋白质量 (kg) — 减重是否掉肌</div>
+              <div className="mb-2 text-xs font-medium text-muted-foreground">脂肪量 vs 蛋白质量 (kg) — 减重是否掉肌</div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
                   <YAxis
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <Tooltip
-                    contentStyle={{ borderRadius: 8, borderColor: "#e2e8f0", fontSize: 12 }}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid hsl(var(--border))",
+                      backgroundColor: "hsl(var(--popover))",
+                      color: "hsl(var(--foreground))",
+                      fontSize: 12,
+                    }}
                     formatter={(value: number | string, name: string) => [
                       typeof value === "number" ? value.toFixed(1) : value,
                       name === "fatMass" ? "脂肪量 (kg)" : "蛋白质量 (kg)",

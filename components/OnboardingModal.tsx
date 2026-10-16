@@ -26,11 +26,11 @@ import { cn } from "@/lib/utils";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-/** 三档卡片配色（保守 = 稳健绿 / 中性 = 推荐蓝 / 激进 = 进取紫） */
+/** 三档卡片配色（语义 token，dark 安全：保守=success / 中性=primary 推荐 / 激进=warning） */
 const STRATEGY_CARD_CLASS: Record<TargetOption["type"], string> = {
-  conservative: "border-emerald-500 bg-emerald-50 text-emerald-700",
-  moderate: "border-sky-500 bg-sky-50 text-sky-700",
-  aggressive: "border-violet-500 bg-violet-50 text-violet-700",
+  conservative: "border-success/40 bg-success/10 text-success",
+  moderate: "border-primary/40 bg-primary/10 text-primary",
+  aggressive: "border-warning/40 bg-warning/10 text-warning",
 };
 
 const STRATEGY_TIP: Record<TargetOption["type"], string> = {
@@ -215,11 +215,15 @@ export function OnboardingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            {profile ? "编辑代谢初始档案" : "建立代谢初始档案"}
+          <DialogTitle className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-gradient text-white">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span className="break-words text-gradient-brand">
+              {profile ? "编辑代谢初始档案" : "建立代谢初始档案"}
+            </span>
           </DialogTitle>
           <DialogDescription>
             填写生理参数后，系统将按标准 BMI 与体脂率基准智能推荐三档目标梯度，一键选中即可。
@@ -403,12 +407,16 @@ export function OnboardingModal({
               </div>
               <div>
                 <div className="text-[11px] text-muted-foreground">初始 TDEE (kcal)</div>
-                <div className="text-lg font-bold tabular-nums text-sky-600">{derived.tdee}</div>
+                <div className="text-lg font-bold tabular-nums text-info">{derived.tdee}</div>
               </div>
             </div>
           )}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <p className="break-words rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
