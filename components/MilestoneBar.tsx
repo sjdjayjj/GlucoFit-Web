@@ -55,19 +55,21 @@ export function MilestoneBar() {
               {m.achieved ? "已达标" : `距目标还差 ${m.remainingKg.toFixed(1)} kg`}
             </span>
           </div>
-          <div className="relative h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-700",
-                m.achieved
-                  ? "bg-gradient-to-r from-sky-500 to-blue-500"
-                  : "bg-gradient-to-r from-emerald-500 to-emerald-400"
-              )}
-              style={{ width: `${Math.max(2, m.progressPct)}%` }}
-            />
-          </div>
-          <div className="text-right text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
-            总进度 {m.progressPct.toFixed(0)}%
+          <div className="flex items-center gap-2.5">
+            <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-700",
+                  m.achieved
+                    ? "bg-gradient-to-r from-sky-500 to-blue-500"
+                    : "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                )}
+                style={{ width: `${Math.max(2, m.progressPct)}%` }}
+              />
+            </div>
+            <span className="shrink-0 whitespace-nowrap text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500">
+              总进度 {m.progressPct.toFixed(0)}%
+            </span>
           </div>
         </div>
       </CardContent>
