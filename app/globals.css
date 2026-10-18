@@ -3,76 +3,62 @@
 @tailwind utilities;
 
 /* ============================================================
-   GlucoFit Design System v4 · "Clinical Cobalt"
-   电光钴蓝 → 紫罗兰品牌渐变，呼应「血糖蓝潮 / 胰岛素紫潮」数据叙事。
-   双主题（light / dark）全部经由 CSS 变量驱动，组件层只消费语义 token。
+   GlucoFit Design System v5 · "Argon Clinical"
+   Apple Health + Oura Ring + Linear 混合现代健康科技风。
+   浅色：微冷灰底 #F8FAFC · 纯白卡片 · 漫反射环境光阴影
+   深色：深空蓝黑 #0B0F17 · 石板玻璃卡片 · 极细白色微边框
+   语义色：blue→indigo 主品牌 / emerald 达标 / amber 预警 / rose 超标
    ============================================================ */
 
 @layer base {
   :root {
-    --background: 214 36% 98%;
-    --foreground: 222 52% 12%;
+    --background: 210 40% 98%; /* #F8FAFC slate-50 微冷灰 */
+    --foreground: 222 47% 11%; /* slate-900 */
     --card: 0 0% 100%;
-    --card-foreground: 222 52% 12%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 52% 12%;
-    --primary: 213 82% 38%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%; /* blue-600 #2563EB */
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 32% 95%;
-    --secondary-foreground: 222 47% 20%;
-    --muted: 214 30% 94%;
-    --muted-foreground: 218 14% 46%;
-    --accent: 213 65% 94%;
-    --accent-foreground: 213 82% 30%;
-    --destructive: 0 72% 51%;
+    --secondary: 210 40% 96%; /* slate-100 */
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%; /* slate-500 */
+    --accent: 210 40% 96%;
+    --accent-foreground: 221 83% 40%;
+    --destructive: 347 77% 50%; /* rose-600 #E11D48 */
     --destructive-foreground: 0 0% 100%;
-    --success: 160 66% 36%;
-    --warning: 34 92% 44%;
-    --info: 199 86% 42%;
-    --border: 216 24% 90%;
-    --input: 216 24% 88%;
-    --ring: 213 82% 38%;
-    --radius: 1rem;
-
-    /* 品牌渐变与阴影着色（dark 下自动加深） */
-    --brand-gradient: linear-gradient(
-      135deg,
-      hsl(213 82% 38%) 0%,
-      hsl(231 72% 48%) 55%,
-      hsl(258 68% 56%) 100%
-    );
-    --shadow-tint: 222 52% 12%;
-    --ambient-1: 0.07;
-    --ambient-2: 0.06;
+    --success: 161 94% 30%; /* emerald-600 */
+    --warning: 32 95% 44%; /* amber-600 */
+    --info: 199 89% 48%; /* sky-500 */
+    --border: 214 32% 91%; /* slate-200 */
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%; /* blue-500 */
   }
 
   .dark {
-    --background: 222 44% 7%;
-    --foreground: 210 40% 96%;
-    --card: 222 40% 10%;
+    --background: 220 35% 6%; /* #0B0F17 深空蓝黑 */
+    --foreground: 210 40% 96%; /* slate-100 */
+    --card: 222 47% 11%; /* slate-900 */
     --card-foreground: 210 40% 96%;
-    --popover: 222 42% 9%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 96%;
-    --primary: 213 88% 62%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 222 28% 16%;
+    --primary: 217 91% 60%; /* blue-500（深色下提亮一档） */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 28% 17%; /* slate-800 */
     --secondary-foreground: 210 40% 92%;
-    --muted: 222 26% 15%;
-    --muted-foreground: 216 18% 66%;
-    --accent: 213 42% 18%;
-    --accent-foreground: 210 80% 88%;
-    --destructive: 0 68% 56%;
+    --muted: 217 28% 17%;
+    --muted-foreground: 215 20% 65%; /* slate-400 */
+    --accent: 217 30% 20%;
+    --accent-foreground: 210 40% 92%;
+    --destructive: 347 77% 58%;
     --destructive-foreground: 0 0% 100%;
-    --success: 160 60% 48%;
-    --warning: 38 92% 56%;
-    --info: 199 86% 58%;
-    --border: 222 24% 18%;
-    --input: 222 24% 24%;
-    --ring: 213 88% 62%;
-
-    --shadow-tint: 222 70% 2%;
-    --ambient-1: 0.12;
-    --ambient-2: 0.1;
+    --success: 161 84% 40%;
+    --warning: 38 92% 52%;
+    --info: 199 89% 56%;
+    --border: 217 28% 17%;
+    --input: 217 28% 22%;
+    --ring: 217 91% 60%;
   }
 }
 
@@ -94,7 +80,7 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* 环境光晕：顶部双色径向渐变，为纯色背景注入深度 */
+  /* 极淡顶部环境光晕：为冷灰底注入呼吸感（深浅色各自校准） */
   body::before {
     content: "";
     position: fixed;
@@ -102,36 +88,49 @@
     z-index: -1;
     pointer-events: none;
     background: radial-gradient(
-        62% 42% at 12% -4%,
-        hsl(var(--primary) / var(--ambient-1)),
+        56% 38% at 14% -6%,
+        rgba(37, 99, 235, 0.05),
         transparent 70%
       ),
       radial-gradient(
-        48% 36% at 92% 2%,
-        hsl(258 68% 58% / var(--ambient-2)),
+        42% 30% at 88% -4%,
+        rgba(99, 102, 241, 0.04),
+        transparent 70%
+      );
+  }
+
+  .dark body::before {
+    background: radial-gradient(
+        56% 38% at 14% -6%,
+        rgba(59, 130, 246, 0.09),
+        transparent 70%
+      ),
+      radial-gradient(
+        42% 30% at 88% -4%,
+        rgba(129, 140, 248, 0.07),
         transparent 70%
       );
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.24);
+    background: rgba(37, 99, 235, 0.18);
   }
 
   /* 细滚动条，跟随主题 */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+    scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
   }
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
+    background: rgba(100, 116, 139, 0.3);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+    background: rgba(100, 116, 139, 0.5);
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -148,15 +147,9 @@
 }
 
 @layer utilities {
-  .text-gradient-brand {
-    background: var(--brand-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .bg-brand-gradient {
-    background: var(--brand-gradient);
+  /* 等宽数字：核心指标大数字必备，防止数值变化抖动 */
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 
   /* 安全区工具类（刘海屏 / 圆角屏） */
@@ -167,18 +160,49 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  .glass {
-    background: hsl(var(--background) / 0.72);
-    backdrop-filter: blur(14px) saturate(1.4);
-    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  /* 品牌渐变（blue-600 → indigo-600） */
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  }
+  .text-gradient-brand {
+    background-image: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
-  .tabular {
-    font-variant-numeric: tabular-nums;
+  /* 毛玻璃（导航栏底座；深色自动切换） */
+  .glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  }
+  .dark .glass {
+    background: rgba(11, 15, 23, 0.72);
+  }
+
+  /* 骨架屏流光底纹（配 animate-shimmer 使用） */
+  .skeleton-sheen {
+    background: linear-gradient(
+      100deg,
+      rgba(226, 232, 240, 0.7) 40%,
+      rgba(241, 245, 249, 0.9) 50%,
+      rgba(226, 232, 240, 0.7) 60%
+    );
+    background-size: 200% 100%;
+  }
+  .dark .skeleton-sheen {
+    background: linear-gradient(
+      100deg,
+      rgba(30, 41, 59, 0.7) 40%,
+      rgba(51, 65, 85, 0.9) 50%,
+      rgba(30, 41, 59, 0.7) 60%
+    );
+    background-size: 200% 100%;
   }
 }
 
-/* v3.0 SOS 呼吸节律动画：吸气 4s → 呼气 6s（10s 循环） */
+/* v3.0 SOS 呼吸节律动画：吸气 4s → 呼气 6s（10s 循环）——业务依赖，勿删 */
 @keyframes breathe {
   0% {
     transform: scale(1);

@@ -135,8 +135,13 @@ export function ExerciseLogDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400"
+            >
+              <Dumbbell className="h-4 w-4" />
+            </span>
             记录运动
           </DialogTitle>
           <DialogDescription>
@@ -156,21 +161,23 @@ export function ExerciseLogDialog({
                   type="button"
                   onClick={() => set({ category: c })}
                   className={cn(
-                    "min-h-10 rounded-lg border px-3 py-2 text-left transition-colors",
+                    "min-h-10 rounded-xl border px-3 py-2 text-left transition-all duration-200 ease-out",
                     form.category === c
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-card hover:bg-muted"
+                      ? "border-blue-500/40 bg-blue-500/10 dark:border-blue-400/40 dark:bg-blue-400/10"
+                      : "border-slate-200/70 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800/60 dark:hover:bg-slate-800"
                   )}
                 >
                   <div
                     className={cn(
                       "text-xs font-semibold",
-                      form.category === c ? "text-primary" : "text-foreground"
+                      form.category === c
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-slate-900 dark:text-white"
                     )}
                   >
                     {EXERCISE_CATEGORY_LABEL[c]}
                   </div>
-                  <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
+                  <div className="mt-0.5 text-[11px] leading-tight text-slate-400 dark:text-slate-500">
                     {EXERCISE_CATEGORY_DESC[c]}
                   </div>
                 </button>
@@ -228,7 +235,7 @@ export function ExerciseLogDialog({
                 </Button>
               )}
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
               {estimated
                 ? `MET ${estimated.met} × ${estimated.weightKg.toFixed(1)} kg × ${(estimated.minutes / 60).toFixed(2)} h ≈ ${estimated.kcal} kcal，留空保存时自动采用`
                 : "暂无体重数据，无法按 MET 估算，请手动输入"}
@@ -236,12 +243,12 @@ export function ExerciseLogDialog({
           </div>
 
           {/* 是否餐后 */}
-          <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
+          <div className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-slate-800/40">
             <div>
               <Label htmlFor="ex-post-meal" className="text-sm">
                 紧邻餐后（30-45 分钟内）
               </Label>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
                 餐后肌肉泵计 入稳糖行为闭环
               </p>
             </div>
@@ -262,10 +269,10 @@ export function ExerciseLogDialog({
                   type="button"
                   onClick={() => toggleFeel(tag)}
                   className={cn(
-                    "flex min-h-10 items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                    "flex min-h-10 items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-200 ease-out",
                     form.muscleFeel.includes(tag)
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-input bg-card text-muted-foreground hover:bg-muted"
+                      ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:border-blue-400/40 dark:bg-blue-400/10 dark:text-blue-400"
+                      : "border-slate-200/70 bg-white text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-800"
                   )}
                 >
                   {tag}
@@ -285,7 +292,7 @@ export function ExerciseLogDialog({
             />
           </div>
 
-          {error && <p className="break-words text-sm text-destructive">{error}</p>}
+          {error && <p className="break-words text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         </div>
 
         <DialogFooter>

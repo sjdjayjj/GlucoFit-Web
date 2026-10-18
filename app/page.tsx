@@ -104,7 +104,7 @@ export default function Home() {
     // 避免 Zustand persist 在 SSR 水合时产生不匹配
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <div className="flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-brand-gradient shadow-xl">
+        <div className="flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl bg-brand-gradient shadow-sm shadow-blue-600/25">
           <Activity className="h-8 w-8 text-white" />
         </div>
       </div>
@@ -181,29 +181,29 @@ export default function Home() {
 
   return (
     <div className="min-h-dvh">
-      {/* 顶栏：玻璃拟态 + 安全区适配 */}
-      <header className="glass sticky top-0 z-40 border-b border-border/60 shadow-sm">
+      {/* 顶栏：毛玻璃导航 + 安全区适配 */}
+      <header className="glass sticky top-0 z-40 border-b border-slate-200/60 dark:border-white/[0.06]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] md:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-md">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-sm shadow-blue-600/25">
               <Activity className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-base font-bold leading-tight tracking-tight">
-                <span className="text-gradient-brand">GlucoFit</span>
+              <h1 className="text-base font-bold leading-tight tracking-tight text-slate-900 dark:text-white">
+                GlucoFit
               </h1>
-              <p className="hidden text-[11px] text-muted-foreground xs:block">
+              <p className="hidden text-[11px] font-medium text-slate-400 xs:block dark:text-slate-500">
                 代谢自动驾驶 · Metabolic Autopilot v3.0
               </p>
             </div>
           </div>
 
-          <div className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex">
+          <div className="hidden items-center gap-1.5 text-xs font-medium text-slate-400 lg:flex dark:text-slate-500">
             <CalendarDays className="h-4 w-4" />
             {todayLabel}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* 云同步：仅登录后显示（游客数据仅存本机，无同步语义） */}
             {user && (
               <Button
@@ -237,12 +237,21 @@ export default function Home() {
 
             {/* 账户状态 */}
             {user ? (
-              <div className="flex items-center gap-1 rounded-full border bg-muted/40 py-1 pl-3 pr-1">
-                <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={user.email}>
+              <div className="flex min-w-0 items-center gap-1 rounded-full border border-slate-200/80 bg-slate-50 py-1 pl-3 pr-1 dark:border-white/10 dark:bg-slate-800/60">
+                <span
+                  className="min-w-0 max-w-[84px] xs:max-w-[140px] truncate text-xs font-medium text-slate-500 dark:text-slate-400"
+                  title={user.email}
+                >
                   {user.email}
                 </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" title="退出登录" onClick={handleSignOut}>
-                  <LogOut className="h-3.5 w-3.5" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  title="退出登录"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
@@ -255,8 +264,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 仪表盘：移动端单列，md+ 双列网格 */}
-      <main className="mx-auto max-w-7xl px-4 pb-28 pt-4 md:px-6 md:pb-24 md:pt-6">
+      {/* 仪表盘：Bento Grid —— 移动端单列，md+ 双列便当盒 */}
+      <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 md:px-6 md:pb-24 md:pt-6">
         {/* 减重里程碑条（建档后常驻顶部） */}
         {profile && (
           <div className="mb-4 animate-fade-up md:mb-5">
@@ -265,13 +274,13 @@ export default function Home() {
         )}
 
         {/* v3.0 核心：虚拟血糖/胰岛素潮汐引擎（代谢数字孪生） */}
-        <div className="mb-4 animate-fade-up md:mb-6">
+        <div className="mb-4 animate-fade-up [animation-delay:60ms] md:mb-5">
           <VirtualMetabolicWave />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
           {/* 左列：代谢监控与即时状态 */}
-          <div className="flex flex-col gap-4 md:gap-6">
+          <div className="flex flex-col gap-4 md:gap-5">
             <FastingTracker />
             <EnergyBalanceCard />
 
@@ -280,7 +289,9 @@ export default function Home() {
               <CardHeader className="flex-row items-start justify-between space-y-0">
                 <div className="space-y-1.5">
                   <CardTitle className="flex items-center gap-2">
-                    <UtensilsCrossed className="h-5 w-5 text-primary" />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <UtensilsCrossed className="h-4 w-4" />
+                    </span>
                     今日餐食稳糖追踪
                   </CardTitle>
                   <CardDescription>
@@ -292,9 +303,11 @@ export default function Home() {
               </CardHeader>
               <CardContent className="flex flex-1 flex-col gap-3">
                 {todayMeals.length === 0 ? (
-                  <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-10 text-center">
-                    <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-200 py-10 text-center dark:border-white/10">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800/60">
+                      <UtensilsCrossed className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+                    </span>
+                    <p className="max-w-[260px] text-[13px] leading-relaxed text-slate-400 dark:text-slate-500">
                       点击右下角「记饮食」打卡，支持拍照识别与语音快记
                     </p>
                   </div>
@@ -319,14 +332,14 @@ export default function Home() {
           </div>
 
           {/* 右列：体征趋势与智能分析 */}
-          <div className="flex flex-col gap-4 md:gap-6">
+          <div className="flex flex-col gap-4 md:gap-5">
             <BodyMetricsCard />
             <AIDiagnosisCard />
             <CompositionCharts />
           </div>
         </div>
 
-        <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+        <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-400 sm:text-xs dark:text-slate-500">
           控糖理念：进食顺序 蔬菜 → 蛋白脂肪 → 慢碳 · 餐后 30 分钟内激活肌肉泵（散步 / 提踵）· 热量赤字 300-500 kcal · 关注脂肪量下降与蛋白质量维持
         </p>
       </main>
@@ -342,10 +355,10 @@ export default function Home() {
       {/* 同步结果轻提示 */}
       {toast && (
         <div
-          className={`fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex max-w-[92vw] -translate-x-1/2 animate-fade-up items-center gap-2 rounded-full border px-4 py-2.5 text-sm shadow-lg ${
+          className={`fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex max-w-[92vw] -translate-x-1/2 animate-fade-up items-center gap-2 rounded-full border px-4 py-2.5 text-sm shadow-xl backdrop-blur-md sm:bottom-6 ${
             toast.ok
-              ? "border-emerald-300/50 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300"
-              : "border-red-300/50 bg-red-50 text-red-600 dark:bg-red-950/70 dark:text-red-300"
+              ? "border-emerald-500/20 bg-emerald-50/90 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-400"
+              : "border-rose-500/20 bg-rose-50/90 text-rose-700 dark:bg-rose-950/70 dark:text-rose-400"
           }`}
         >
           {toast.message}
@@ -353,7 +366,7 @@ export default function Home() {
             type="button"
             onClick={() => setToast(null)}
             aria-label="关闭提示"
-            className="text-current/60 hover:text-current"
+            className="text-current/60 transition-colors hover:text-current"
           >
             <X className="h-3.5 w-3.5" />
           </button>

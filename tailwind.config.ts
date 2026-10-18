@@ -56,26 +56,28 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 4px)",
-        sm: "calc(var(--radius) - 8px)",
-        xl: "calc(var(--radius) + 4px)",
-        "2xl": "calc(var(--radius) + 10px)",
-      },
       boxShadow: {
-        sm: "0 1px 2px hsl(var(--shadow-tint) / 0.05), 0 1px 3px hsl(var(--shadow-tint) / 0.07)",
+        // Argon 高定：漫反射环境光阴影（多层、低不透明度、带一缕品牌蓝）
+        card:
+          "0 2px 10px -3px rgba(6,81,237,0.04), 0 10px 25px -5px rgba(15,23,42,0.03)",
+        "card-hover":
+          "0 4px 14px -3px rgba(6,81,237,0.10), 0 18px 36px -8px rgba(15,23,42,0.10)",
+        sm: "0 1px 2px rgba(15,23,42,0.05)",
         DEFAULT:
-          "0 1px 2px hsl(var(--shadow-tint) / 0.05), 0 2px 6px -1px hsl(var(--shadow-tint) / 0.08)",
-        md: "0 2px 4px hsl(var(--shadow-tint) / 0.05), 0 6px 16px -4px hsl(var(--shadow-tint) / 0.09)",
-        lg: "0 4px 8px hsl(var(--shadow-tint) / 0.06), 0 12px 32px -8px hsl(var(--shadow-tint) / 0.14)",
-        xl: "0 8px 16px hsl(var(--shadow-tint) / 0.08), 0 24px 48px -12px hsl(var(--shadow-tint) / 0.22)",
+          "0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04)",
+        md: "0 4px 12px -2px rgba(15,23,42,0.08), 0 2px 6px -1px rgba(15,23,42,0.04)",
+        lg: "0 12px 28px -6px rgba(15,23,42,0.12), 0 4px 10px -4px rgba(15,23,42,0.05)",
+        xl: "0 20px 44px -10px rgba(15,23,42,0.16), 0 8px 16px -8px rgba(15,23,42,0.06)",
         "2xl":
-          "0 12px 24px hsl(var(--shadow-tint) / 0.1), 0 32px 64px -16px hsl(var(--shadow-tint) / 0.28)",
+          "0 28px 60px -12px rgba(15,23,42,0.22), 0 12px 24px -12px rgba(15,23,42,0.08)",
       },
       keyframes: {
         "fade-up": {

@@ -80,8 +80,13 @@ export function CravingSosDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-warning" />
+          <DialogTitle className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
+            >
+              <Lightbulb className="h-4 w-4" />
+            </span>
             嘴馋急救 SOS
           </DialogTitle>
           <DialogDescription>
@@ -91,13 +96,13 @@ export function CravingSosDialog({
 
         {step === "triage" && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
-              <div className="mb-2 flex items-center gap-1.5 font-semibold text-primary">
+            <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-slate-700 dark:border-blue-400/20 dark:bg-blue-400/5 dark:text-slate-300">
+              <div className="mb-2 flex items-center gap-1.5 font-semibold text-blue-600 dark:text-blue-400">
                 <Brain className="h-4 w-4" />
                 第 1 步 · 生理鉴别
               </div>
               <p>
-                现在端给你一盘<span className="font-medium">水煮鸡胸肉 + 西兰花</span>，
+                现在端给你一盘<span className="font-medium text-slate-900 dark:text-white">水煮鸡胸肉 + 西兰花</span>，
                 你想吃吗？（不想吃 = 多巴胺假性饥饿；想吃 = 真低血糖）
               </p>
             </div>
@@ -114,8 +119,8 @@ export function CravingSosDialog({
 
         {step === "fake_hunger" && (
           <div className="space-y-4">
-            <div className="break-words rounded-lg border border-info/30 bg-info/10 p-4 text-sm text-info">
-              <div className="mb-2 flex items-center gap-1.5 font-semibold">
+            <div className="break-words rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 text-sm text-slate-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-slate-300">
+              <div className="mb-2 flex items-center gap-1.5 font-semibold text-sky-600 dark:text-sky-400">
                 <Wind className="h-4 w-4" />
                 鉴别结果：多巴胺假性饥饿
               </div>
@@ -124,25 +129,25 @@ export function CravingSosDialog({
 
             <div className="space-y-2">
               <PrescriptionRow
-                icon={<CupSoda className="h-4 w-4 text-info" />}
+                icon={<CupSoda className="h-4 w-4 text-sky-600 dark:text-sky-400" />}
                 title="先喝 300ml 气泡水 / 零卡电解质水"
                 desc="胃部机械扩张即可消除约一半假性食欲；想喝甜饮时选零卡电解质水或黑咖啡"
               />
               <PrescriptionRow
-                icon={<Apple className="h-4 w-4 text-success" />}
+                icon={<Apple className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
                 title="嚼 5 颗巴旦木（约 35 kcal）"
                 desc="咀嚼动作 + 脂肪香气可诱导饱腹信号，给大脑 10 分钟缓冲"
               />
             </div>
 
             {/* 60 秒呼吸节律动画 */}
-            <div className="flex flex-col items-center gap-2 rounded-lg border bg-muted/40 p-4">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-white/[0.06] dark:bg-slate-800/40">
               <div className="relative flex h-20 w-20 items-center justify-center">
-                <span className="absolute h-16 w-16 animate-ping rounded-full bg-info/25" />
-                <span className="absolute h-12 w-12 animate-breathe rounded-full bg-info/40" />
-                <Wind className="h-5 w-5 text-info" />
+                <span className="absolute h-16 w-16 animate-ping rounded-full bg-sky-400/25" />
+                <span className="absolute h-12 w-12 animate-breathe rounded-full bg-sky-400/40" />
+                <Wind className="h-5 w-5 text-sky-600 dark:text-sky-400" />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 60 秒呼吸节律：吸气 4 秒 → 屏息 2 秒 → 缓慢呼气 6 秒，跟随圆圈脉动
               </p>
             </div>
@@ -156,8 +161,8 @@ export function CravingSosDialog({
 
         {step === "real_hunger" && (
           <div className="space-y-4">
-            <div className="break-words rounded-lg border border-success/30 bg-success/10 p-4 text-sm text-success">
-              <div className="mb-2 flex items-center gap-1.5 font-semibold">
+            <div className="break-words rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-slate-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-slate-300">
+              <div className="mb-2 flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
                 <Drumstick className="h-4 w-4" />
                 鉴别结果：真低血糖 / 真饥饿
               </div>
@@ -168,12 +173,12 @@ export function CravingSosDialog({
             </div>
             <div className="space-y-2">
               <PrescriptionRow
-                icon={<Drumstick className="h-4 w-4 text-success" />}
+                icon={<Drumstick className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
                 title="首选：2 个水煮蛋 / 无糖希腊酸奶"
                 desc="蛋白质 20g 内、几乎不升胰岛素，直接关闭饥饿素"
               />
               <PrescriptionRow
-                icon={<Apple className="h-4 w-4 text-warning" />}
+                icon={<Apple className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
                 title="次选：一小把原味坚果 + 黑咖啡"
                 desc="脂肪供能缓释，咖啡因可轻度抑制食欲与提升代谢"
               />
@@ -189,9 +194,9 @@ export function CravingSosDialog({
           <div className="flex flex-col items-center gap-4 py-2">
             <div className="relative flex h-32 w-32 items-center justify-center">
               <svg className="absolute -rotate-90" width={128} height={128}>
-                <circle className="text-border" cx="64" cy="64" r="56" fill="none" stroke="currentColor" strokeWidth={8} />
+                <circle className="text-slate-200 dark:text-slate-700" cx="64" cy="64" r="56" fill="none" stroke="currentColor" strokeWidth={8} />
                 <circle
-                  className="text-primary"
+                  className="text-blue-600 dark:text-blue-400"
                   cx="64"
                   cy="64"
                   r="56"
@@ -204,15 +209,15 @@ export function CravingSosDialog({
                   style={{ transition: "stroke-dashoffset 1s linear" }}
                 />
               </svg>
-              <span className="text-2xl font-bold tabular-nums text-primary">
+              <span className="text-2xl font-bold tabular-nums tracking-tight text-blue-600 dark:text-blue-400">
                 {mm}:{ss}
               </span>
             </div>
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">
               冲动正在消退中…去喝水、刷牙或走动一下。
               <br />
               如果 10 分钟后你依然极度想吃，系统允许你
-              <span className="font-medium text-foreground">无罪恶感地吃一小份</span>。
+              <span className="font-medium text-slate-900 dark:text-white">无罪恶感地吃一小份</span>。
             </p>
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               我已经不想吃了
@@ -222,14 +227,14 @@ export function CravingSosDialog({
 
         {step === "countdown_done" && (
           <div className="space-y-4">
-            <div className="break-words rounded-lg border border-success/30 bg-success/10 p-4 text-sm text-success">
-              <div className="mb-1 flex items-center gap-1.5 font-semibold">
+            <div className="break-words rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-slate-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-slate-300">
+              <div className="mb-1 flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="h-4 w-4" />
                 10 分钟已到 · 冲动大概率已消退
               </div>
               <p>
                 若仍极度想吃：允许你无罪恶感地吃一小份（约 150 kcal），
-                系统将帮你把明天的断食窗口放宽至 <span className="font-semibold">14:10</span>，
+                系统将帮你把明天的断食窗口放宽至 <span className="font-semibold text-slate-900 dark:text-white">14:10</span>，
                 以缓冲今日额外摄入。
               </p>
             </div>
@@ -242,7 +247,7 @@ export function CravingSosDialog({
               </Button>
             </div>
             {adjusted && (
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
                 已将断食协议临时调整为 {goal.fastingProtocol}，次日可在断食卡片手动切回。
               </p>
             )}
@@ -263,11 +268,11 @@ function PrescriptionRow({
   desc: string;
 }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border p-3">
+    <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/70 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-slate-800/40">
       <span className="mt-0.5 shrink-0">{icon}</span>
       <div>
-        <div className={cn("text-sm font-medium")}>{title}</div>
-        <div className="text-xs text-muted-foreground">{desc}</div>
+        <div className={cn("text-sm font-medium text-slate-900 dark:text-white")}>{title}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">{desc}</div>
       </div>
     </div>
   );

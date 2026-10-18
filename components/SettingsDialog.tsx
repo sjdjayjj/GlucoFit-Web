@@ -189,8 +189,13 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2.5">
+            <span
+              aria-hidden
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-500/10 text-slate-600 dark:bg-slate-400/10 dark:text-slate-300"
+            >
+              <Settings className="h-4 w-4" />
+            </span>
             设置
           </DialogTitle>
           <DialogDescription>
@@ -200,10 +205,12 @@ export function SettingsDialog({
 
         <div className="space-y-4">
           {/* ============ 代谢初始档案 ============ */}
-          <section className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
-            <h3 className="text-sm font-semibold text-foreground">代谢初始档案</h3>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3">
-              <span className="min-w-0 flex-1 break-words text-xs leading-relaxed text-muted-foreground">
+          <section className="space-y-3 rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-white/[0.06] dark:bg-slate-800/40">
+            <h3 className="text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+              代谢初始档案
+            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white p-3 dark:border-white/[0.08] dark:bg-slate-900/60">
+              <span className="min-w-0 flex-1 break-words text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 {profile
                   ? `${profile.gender === "male" ? "男" : "女"} · ${profile.heightCm} cm · 初始 ${profile.initialWeightKg} kg → 目标 ${profile.targetWeightKg} kg`
                   : "尚未建档：身高/初始体重/目标是 BMI、TDEE 与里程碑的计算基准"}
@@ -225,32 +232,34 @@ export function SettingsDialog({
           </section>
 
           {/* ============ v3.0 工作日/周末双模引擎 ============ */}
-          <section className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
+          <section className="space-y-3 rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-white/[0.06] dark:bg-slate-800/40">
             <div className="flex min-h-10 items-center justify-between gap-3 py-2">
-              <h3 className="text-sm font-semibold text-foreground">周期双模引擎</h3>
+              <h3 className="text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+                周期双模引擎
+              </h3>
               <Switch
                 checked={scheduleForm.enabled}
                 onCheckedChange={(v) => setScheduleForm((s) => ({ ...s, enabled: v }))}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               开启后工作日（周一至五）执行严格断食自动驾驶，周末/社交日自动切换为防御与平衡模式。
             </p>
             {scheduleForm.enabled && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>工作日协议（严格）</Label>
-                  <div className="flex gap-1 rounded-lg border bg-background p-1">
+                  <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-white p-1 dark:border-white/[0.08] dark:bg-slate-900/60">
                     {(["16:8", "18:6"] as const).map((p) => (
                       <button
                         key={p}
                         type="button"
                         onClick={() => setScheduleForm((s) => ({ ...s, weekdayProtocol: p }))}
                         className={cn(
-                          "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium tabular-nums transition-all duration-200 ease-out",
                           scheduleForm.weekdayProtocol === p
-                            ? "bg-card text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-slate-100 text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+                            : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                         )}
                       >
                         {p}
@@ -260,17 +269,17 @@ export function SettingsDialog({
                 </div>
                 <div className="space-y-1.5">
                   <Label>周末协议（弹性）</Label>
-                  <div className="flex gap-1 rounded-lg border bg-background p-1">
+                  <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-white p-1 dark:border-white/[0.08] dark:bg-slate-900/60">
                     {(["14:10", "12:12", "flexible"] as const).map((p) => (
                       <button
                         key={p}
                         type="button"
                         onClick={() => setScheduleForm((s) => ({ ...s, weekendProtocol: p }))}
                         className={cn(
-                          "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium tabular-nums transition-all duration-200 ease-out",
                           scheduleForm.weekendProtocol === p
-                            ? "bg-card text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-slate-100 text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+                            : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                         )}
                       >
                         {p === "flexible" ? "弹性" : p}
@@ -283,8 +292,10 @@ export function SettingsDialog({
           </section>
 
           {/* ============ AI 模型设置 ============ */}
-          <section className="space-y-4 rounded-xl border border-border/60 bg-muted/30 p-4">
-            <h3 className="text-sm font-semibold text-foreground">AI 模型 (BYOK)</h3>
+          <section className="space-y-4 rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 dark:border-white/[0.06] dark:bg-slate-800/40">
+            <h3 className="text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+              AI 模型 (BYOK)
+            </h3>
 
             <div className="space-y-1.5">
               <Label>快速填充服务商预设</Label>
@@ -297,10 +308,10 @@ export function SettingsDialog({
                       set({ baseUrl: p.baseUrl, model: p.model, visionModel: p.visionModel })
                     }
                     className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-200 ease-out",
                       form.baseUrl === p.baseUrl
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-input bg-card text-muted-foreground hover:bg-muted"
+                        ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:border-blue-400/40 dark:bg-blue-400/10 dark:text-blue-400"
+                        : "border-slate-200/70 bg-white text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-800"
                     )}
                   >
                     {p.label}
@@ -336,7 +347,7 @@ export function SettingsDialog({
                 <button
                   type="button"
                   onClick={() => setShowKey((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-900 dark:hover:text-white"
                   aria-label={showKey ? "隐藏 Key" : "显示 Key"}
                 >
                   {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -375,10 +386,10 @@ export function SettingsDialog({
               )}
             </datalist>
 
-            <div className="flex min-h-10 items-center justify-between gap-3 rounded-lg border bg-background p-3">
+            <div className="flex min-h-10 items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white p-3 dark:border-white/[0.08] dark:bg-slate-900/60">
               <div className="space-y-0.5 break-words">
                 <Label htmlFor="ai-deep-thinking">深度思考模式</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   开启后请求携带 enable_thinking 参数（Qwen3 / SiliconFlow
                   等支持的推理模型生效），响应更慢但推理更深，默认关闭
                 </p>
@@ -390,9 +401,9 @@ export function SettingsDialog({
               />
             </div>
 
-            <div className="rounded-lg border bg-background p-3">
+            <div className="rounded-xl border border-slate-200/70 bg-white p-3 dark:border-white/[0.08] dark:bg-slate-900/60">
               <div className="flex min-h-10 flex-wrap items-center justify-between gap-3">
-                <span className="text-xs text-muted-foreground">一键 Ping 验证 API 可用性</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">一键 Ping 验证 API 可用性</span>
                 <Button variant="outline" size="sm" onClick={handleTest} disabled={aiTest.loading}>
                   {aiTest.loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   测试连接
@@ -403,7 +414,7 @@ export function SettingsDialog({
           </section>
 
           {error && (
-            <p className="break-words rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="break-words rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400">
               {error}
             </p>
           )}
@@ -430,7 +441,7 @@ function AsyncMessage({ state }: { state: AsyncState }) {
     <p
       className={cn(
         "mt-2 flex items-start gap-1 break-words text-xs font-medium",
-        state.ok ? "text-success" : "text-destructive"
+        state.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
       )}
     >
       {state.ok && <BadgeCheck className="h-3.5 w-3.5" />}

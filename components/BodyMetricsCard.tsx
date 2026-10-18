@@ -67,18 +67,20 @@ function DeltaChip({
   lowerIsBetter?: boolean;
 }) {
   if (previous == null) {
-    return <span className="text-[11px] text-muted-foreground">首次记录</span>;
+    return <span className="text-[11px] text-slate-400 dark:text-slate-500">首次记录</span>;
   }
   const delta = current - previous;
   if (Math.abs(delta) <= EPSILON) {
-    return <span className="text-[11px] text-muted-foreground">较上次持平</span>;
+    return <span className="text-[11px] text-slate-400 dark:text-slate-500">较上次持平</span>;
   }
   const improved = lowerIsBetter ? delta < 0 : delta > 0;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-0.5 text-[11px] font-medium tabular",
-        improved ? "text-success" : "text-destructive"
+        "inline-flex items-center gap-0.5 text-[11px] font-medium tabular-nums",
+        improved
+          ? "text-emerald-600 dark:text-emerald-400"
+          : "text-rose-600 dark:text-rose-400"
       )}
     >
       {delta < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
@@ -102,16 +104,21 @@ export function BodyMetricsCard() {
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            <Scale className="h-5 w-5 text-primary" />
-            体脂秤最新状态
-          </CardTitle>
-          <CardDescription>
-            {latest
-              ? `BIA 体成分报告 · ${latest.date}${latest.notes ? ` · ${latest.notes}` : ""}`
-              : "暂无称重记录，点击右下角「录体脂」开始追踪"}
-          </CardDescription>
+        <div className="flex items-start gap-3">
+          <div
+            aria-hidden
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400"
+          >
+            <Scale className="h-4 w-4" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle>体脂秤最新状态</CardTitle>
+            <CardDescription>
+              {latest
+                ? `BIA 体成分报告 · ${latest.date}${latest.notes ? ` · ${latest.notes}` : ""}`
+                : "暂无称重记录，点击右下角「录体脂」开始追踪"}
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
 
@@ -124,14 +131,19 @@ export function BodyMetricsCard() {
                 const Icon = m.icon;
                 const value = latest[m.key];
                 return (
-                  <div key={m.key} className="rounded-lg border bg-muted/40 p-3">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div
+                    key={m.key}
+                    className="rounded-xl border border-slate-200/70 bg-slate-50/60 p-3.5 dark:border-white/[0.06] dark:bg-slate-800/40"
+                  >
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">
                       <Icon className="h-3.5 w-3.5" />
                       {m.label}
                     </div>
-                    <div className="mt-1 text-2xl font-semibold tabular">
+                    <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
                       {fmtNum(value, m.digits)}
-                      <span className="ml-0.5 text-sm font-normal text-muted-foreground">{m.unit}</span>
+                      <span className="ml-0.5 text-xs font-medium text-slate-400 dark:text-slate-500">
+                        {m.unit}
+                      </span>
                     </div>
                     <div className="mt-1">
                       <DeltaChip
@@ -153,13 +165,16 @@ export function BodyMetricsCard() {
                 const Icon = m.icon;
                 const value = latest[m.key];
                 return (
-                  <div key={m.key} className="flex items-center gap-2.5 rounded-lg border p-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-info/10 text-info">
+                  <div
+                    key={m.key}
+                    className="flex items-center gap-2.5 rounded-xl border border-slate-200/70 p-2.5 dark:border-white/[0.06]"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[11px] text-muted-foreground">{m.label}</div>
-                      <div className="text-sm font-semibold tabular">
+                      <div className="text-[11px] text-slate-400 dark:text-slate-500">{m.label}</div>
+                      <div className="text-sm font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
                         {value != null ? `${fmtNum(value, m.digits)} ${m.unit}` : "—"}
                       </div>
                     </div>
@@ -175,10 +190,13 @@ export function BodyMetricsCard() {
                   <div
                     key={insight.id}
                     className={cn(
-                      "rounded-lg border p-3 text-xs leading-relaxed break-words",
-                      insight.tone === "good" && "border-success/30 bg-success/10 text-success",
-                      insight.tone === "warn" && "border-warning/30 bg-warning/10 text-warning",
-                      insight.tone === "info" && "border-info/30 bg-info/10 text-info"
+                      "rounded-xl border p-3 text-xs leading-relaxed break-words",
+                      insight.tone === "good" &&
+                        "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400",
+                      insight.tone === "warn" &&
+                        "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-400",
+                      insight.tone === "info" &&
+                        "border-sky-500/20 bg-sky-500/10 text-sky-600 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-400"
                     )}
                   >
                     <span className="font-semibold">{insight.title}：</span>
@@ -189,9 +207,9 @@ export function BodyMetricsCard() {
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-10 text-center">
-            <Scale className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-200 py-10 text-center dark:border-white/10">
+            <Scale className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+            <p className="text-sm text-slate-400 dark:text-slate-500">
               录入体脂秤数据，开始追踪脂肪量与蛋白质量变化
             </p>
           </div>

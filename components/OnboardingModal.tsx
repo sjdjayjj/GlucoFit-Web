@@ -26,11 +26,14 @@ import { cn } from "@/lib/utils";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-/** 三档卡片配色（语义 token，dark 安全：保守=success / 中性=primary 推荐 / 激进=warning） */
+/** 三档卡片配色（Argon 语义：保守=emerald / 中性=blue 推荐 / 激进=amber），双主题可读 */
 const STRATEGY_CARD_CLASS: Record<TargetOption["type"], string> = {
-  conservative: "border-success/40 bg-success/10 text-success",
-  moderate: "border-primary/40 bg-primary/10 text-primary",
-  aggressive: "border-warning/40 bg-warning/10 text-warning",
+  conservative:
+    "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-400",
+  moderate:
+    "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:border-blue-400/40 dark:bg-blue-400/10 dark:text-blue-400",
+  aggressive:
+    "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-400",
 };
 
 const STRATEGY_TIP: Record<TargetOption["type"], string> = {
@@ -218,12 +221,13 @@ export function OnboardingModal({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-gradient text-white">
+            <span
+              aria-hidden
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-gradient text-white shadow-sm shadow-blue-600/25"
+            >
               <Sparkles className="h-4 w-4" />
             </span>
-            <span className="break-words text-gradient-brand">
-              {profile ? "编辑代谢初始档案" : "建立代谢初始档案"}
-            </span>
+            {profile ? "编辑代谢初始档案" : "建立代谢初始档案"}
           </DialogTitle>
           <DialogDescription>
             填写生理参数后，系统将按标准 BMI 与体脂率基准智能推荐三档目标梯度，一键选中即可。
@@ -234,17 +238,17 @@ export function OnboardingModal({
           {/* 性别 */}
           <div className="space-y-1.5">
             <Label>性别 *</Label>
-            <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+            <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-slate-800/60">
               {(Object.keys(GENDER_LABEL) as Gender[]).map((g) => (
                 <button
                   key={g}
                   type="button"
                   onClick={() => set({ gender: g })}
                   className={cn(
-                    "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                    "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-200 ease-out",
                     form.gender === g
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   )}
                 >
                   {GENDER_LABEL[g]}
@@ -304,7 +308,7 @@ export function OnboardingModal({
           {targetOptions.length > 0 && (
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
-                <Target className="h-3.5 w-3.5 text-primary" />
+                <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                 智能目标推荐（三选一，也可手动微调）
               </Label>
               <div className="grid gap-2 sm:grid-cols-3">
@@ -314,10 +318,10 @@ export function OnboardingModal({
                     type="button"
                     onClick={() => applyTarget(opt)}
                     className={cn(
-                      "rounded-lg border p-3 text-left transition-colors",
+                      "rounded-xl border p-3 text-left transition-all duration-200 ease-out hover:-translate-y-0.5",
                       form.strategy === opt.type
                         ? STRATEGY_CARD_CLASS[opt.type]
-                        : "border-input bg-card hover:bg-muted"
+                        : "border-slate-200/70 bg-white text-slate-900 hover:border-slate-300/90 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800/60 dark:text-white dark:hover:bg-slate-800"
                     )}
                   >
                     <div className="flex items-center justify-between text-xs font-semibold">
@@ -326,10 +330,10 @@ export function OnboardingModal({
                         <Gauge className="h-3.5 w-3.5" />
                       )}
                     </div>
-                    <div className="mt-1.5 text-lg font-bold tabular-nums">
+                    <div className="mt-1.5 text-lg font-bold tabular-nums tracking-tight">
                       {opt.targetWeightKg}
                       <span className="ml-0.5 text-xs font-normal">kg</span>
-                      <span className="mx-1 text-muted-foreground">/</span>
+                      <span className="mx-1 text-slate-400 dark:text-slate-500">/</span>
                       {opt.targetFatRate}
                       <span className="ml-0.5 text-xs font-normal">%体脂</span>
                     </div>
@@ -340,7 +344,7 @@ export function OnboardingModal({
                 ))}
               </div>
               {form.strategy && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   已选择「{TARGET_STRATEGY_LABEL[form.strategy]}」方案，可在下方微调具体数值。
                 </p>
               )}
@@ -375,17 +379,17 @@ export function OnboardingModal({
           {/* 活动等级 */}
           <div className="space-y-1.5">
             <Label>日常静息活动等级</Label>
-            <div className="grid grid-cols-4 gap-1 rounded-lg border bg-muted/40 p-1">
+            <div className="grid grid-cols-4 gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-slate-800/60">
               {ACTIVITY_LEVEL_OPTIONS.map((a) => (
                 <button
                   key={a.value}
                   type="button"
                   onClick={() => set({ activityLevel: a.value })}
                   className={cn(
-                    "rounded-md px-1 py-1.5 text-xs font-medium transition-colors",
+                    "min-h-10 rounded-lg px-1 py-1.5 text-xs font-medium transition-all duration-200 ease-out",
                     form.activityLevel === a.value
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   )}
                 >
                   {a.label}
@@ -396,24 +400,30 @@ export function OnboardingModal({
 
           {/* 实时衍生指标 */}
           {derived && (
-            <div className="grid grid-cols-3 gap-2 rounded-lg border bg-muted/40 p-3 text-center">
+            <div className="grid grid-cols-3 gap-2 rounded-xl border border-slate-200/70 bg-slate-50/60 p-3 text-center dark:border-white/[0.06] dark:bg-slate-800/40">
               <div>
-                <div className="text-[11px] text-muted-foreground">基线 BMI</div>
-                <div className="text-lg font-bold tabular-nums">{derived.bmi.toFixed(1)}</div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500">基线 BMI</div>
+                <div className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
+                  {derived.bmi.toFixed(1)}
+                </div>
               </div>
               <div>
-                <div className="text-[11px] text-muted-foreground">BMR (kcal)</div>
-                <div className="text-lg font-bold tabular-nums">{derived.bmr}</div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500">BMR (kcal)</div>
+                <div className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
+                  {derived.bmr}
+                </div>
               </div>
               <div>
-                <div className="text-[11px] text-muted-foreground">初始 TDEE (kcal)</div>
-                <div className="text-lg font-bold tabular-nums text-info">{derived.tdee}</div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500">初始 TDEE (kcal)</div>
+                <div className="text-lg font-bold tabular-nums tracking-tight text-sky-600 dark:text-sky-400">
+                  {derived.tdee}
+                </div>
               </div>
             </div>
           )}
 
           {error && (
-            <p className="break-words rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="break-words rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400">
               {error}
             </p>
           )}

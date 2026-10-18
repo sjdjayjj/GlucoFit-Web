@@ -47,19 +47,31 @@ function BudgetBar({
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5 font-medium">
-          <Icon className={cn("h-3.5 w-3.5", over && overWarn ? "text-destructive" : "text-primary")} />
+        <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+          <Icon
+            className={cn(
+              "h-3.5 w-3.5",
+              over && overWarn ? "text-rose-500" : "text-blue-600 dark:text-blue-400"
+            )}
+          />
           {label}
         </span>
-        <span className={cn("tabular", over && overWarn ? "font-semibold text-destructive" : "text-muted-foreground")}>
+        <span
+          className={cn(
+            "tabular-nums",
+            over && overWarn
+              ? "font-semibold text-rose-600 dark:text-rose-400"
+              : "text-slate-400 dark:text-slate-500"
+          )}
+        >
           {Math.round(value)} / {Math.round(max)} {unit}
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
+      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         <div
           className={cn(
-            "h-full rounded-full transition-all",
-            over && overWarn ? "bg-destructive" : pct > 80 ? "bg-warning" : "bg-primary"
+            "h-full rounded-full transition-all duration-700",
+            over && overWarn ? "bg-rose-500" : pct > 80 ? "bg-amber-500" : "bg-blue-600"
           )}
           style={{ width: `${pct}%` }}
         />
@@ -144,28 +156,33 @@ export function MealPlanner({
   return (
     <Card>
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-2 space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            <ChefHat className="h-5 w-5 text-primary" />
-            今日热量预算 与 AI 控糖三餐推荐
-          </CardTitle>
-          <CardDescription>
-            {budget
-              ? `Katch-McArdle：去脂体重 ${budget.ffmKg.toFixed(1)}kg · BMR ${Math.round(budget.bmr)} · TDEE ${Math.round(budget.tdee)} kcal，赤字 ${TARGET_DEFICIT} kcal`
-              : "录入体脂秤数据后自动计算动态 TDEE（Katch-McArdle 公式）"}
-          </CardDescription>
+        <div className="flex items-start gap-3">
+          <div
+            aria-hidden
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400"
+          >
+            <ChefHat className="h-4 w-4" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle>今日热量预算 与 AI 控糖三餐推荐</CardTitle>
+            <CardDescription>
+              {budget
+                ? `Katch-McArdle：去脂体重 ${budget.ffmKg.toFixed(1)}kg · BMR ${Math.round(budget.bmr)} · TDEE ${Math.round(budget.tdee)} kcal，赤字 ${TARGET_DEFICIT} kcal`
+                : "录入体脂秤数据后自动计算动态 TDEE（Katch-McArdle 公式）"}
+            </CardDescription>
+          </div>
         </div>
-        <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+        <div className="flex w-full gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 sm:w-auto dark:border-white/10 dark:bg-slate-800/60">
           {ACTIVITY_LEVELS.map((a) => (
             <button
               key={a.value}
               type="button"
               onClick={() => setActivityFactor(a.value)}
               className={cn(
-                "min-h-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                "min-h-10 flex-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ease-out sm:flex-none sm:px-2.5",
                 activityFactor === a.value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               )}
             >
               {a.label}
@@ -195,7 +212,7 @@ export function MealPlanner({
                 overWarn
               />
               {todaySummary.refinedExposureCount > 0 && (
-                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-warning break-words">
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-medium break-words text-amber-600 dark:text-amber-400">
                   <TriangleAlert className="h-3 w-3" />
                   今日已有 {todaySummary.refinedExposureCount} 次精制碳水暴露
                 </p>
@@ -203,7 +220,7 @@ export function MealPlanner({
             </div>
           </div>
         ) : (
-          <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-slate-200 p-3 text-xs text-slate-400 dark:border-white/10 dark:text-slate-500">
             暂无体成分数据：录入体脂秤数据后，将基于去脂体重（FFM）计算基础代谢与今日热量预算。
           </p>
         )}
@@ -237,7 +254,11 @@ export function MealPlanner({
                 前往配置 AI
               </Button>
             )}
-            {error && <span className="text-xs leading-relaxed break-words text-destructive">{error}</span>}
+            {error && (
+              <span className="text-xs leading-relaxed break-words text-rose-600 dark:text-rose-400">
+                {error}
+              </span>
+            )}
           </div>
         </div>
 
@@ -245,25 +266,30 @@ export function MealPlanner({
         {recommendations && (
           <div className="grid gap-3 md:grid-cols-3">
             {recommendations.map((rec, i) => (
-              <div key={`${rec.mealType}-${i}`} className="flex flex-col rounded-lg border bg-muted/30 p-3">
+              <div
+                key={`${rec.mealType}-${i}`}
+                className="flex flex-col rounded-xl border border-slate-200/70 bg-slate-50/60 p-3.5 transition-all duration-200 ease-out hover:border-slate-300/90 dark:border-white/[0.06] dark:bg-slate-800/40 dark:hover:border-white/[0.12]"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:bg-blue-400/10 dark:text-blue-400">
                     {MEAL_TYPE_LABEL[rec.mealType]}
                   </span>
-                  <span className="text-xs font-semibold tabular-nums">
+                  <span className="text-xs font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
                     {Math.round(rec.estimatedCalories)} kcal
                   </span>
                 </div>
-                <h4 className="mt-2 text-sm font-semibold leading-snug">{rec.title}</h4>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <h4 className="mt-2 text-sm font-semibold leading-snug text-slate-900 dark:text-white">
+                  {rec.title}
+                </h4>
+                <p className="mt-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
                   碳水 {Math.round(rec.macros.carbs)}g · 蛋白 {Math.round(rec.macros.protein)}g · 脂肪 {Math.round(rec.macros.fat)}g
                 </p>
-                <p className="mt-2 flex-1 text-xs leading-relaxed break-words text-muted-foreground">
-                  <span className="font-medium text-foreground">食材：</span>
+                <p className="mt-2 flex-1 text-xs leading-relaxed break-words text-slate-500 dark:text-slate-400">
+                  <span className="font-medium text-slate-900 dark:text-white">食材：</span>
                   {Array.isArray(rec.ingredients) ? rec.ingredients.join("、") : rec.ingredients}
                 </p>
-                <p className="mt-2 rounded-md border border-info/20 bg-info/10 p-2 text-[11px] leading-relaxed break-words text-foreground">
-                  <span className="font-semibold text-info">顺序：</span>
+                <p className="mt-2 rounded-lg border border-sky-500/20 bg-sky-500/10 p-2 text-[11px] leading-relaxed break-words text-slate-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-slate-300">
+                  <span className="font-semibold text-sky-600 dark:text-sky-400">顺序：</span>
                   {rec.recommendedSequence}
                 </p>
                 <Button

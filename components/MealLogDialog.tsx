@@ -51,9 +51,24 @@ const MEAL_TYPE_OPTIONS: Array<{ value: MealType; label: string; icon: React.Com
 ];
 
 const ENERGY_OPTIONS: Array<{ value: EnergyReaction; label: string; activeClass: string }> = [
-  { value: "energetic", label: "精力充沛", activeClass: "border-success bg-success/10 text-success" },
-  { value: "normal", label: "正常平稳", activeClass: "border-border bg-muted text-foreground" },
-  { value: "food_coma", label: "明显嗜睡脑雾", activeClass: "border-destructive bg-destructive/10 text-destructive" },
+  {
+    value: "energetic",
+    label: "精力充沛",
+    activeClass:
+      "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-400",
+  },
+  {
+    value: "normal",
+    label: "正常平稳",
+    activeClass:
+      "border-slate-400/60 bg-slate-100 text-slate-700 dark:border-slate-500/60 dark:bg-slate-700/60 dark:text-slate-200",
+  },
+  {
+    value: "food_coma",
+    label: "明显嗜睡脑雾",
+    activeClass:
+      "border-rose-500/40 bg-rose-500/10 text-rose-600 dark:border-rose-400/40 dark:bg-rose-400/10 dark:text-rose-400",
+  },
 ];
 
 const SATIETY_OPTIONS: Array<{ value: SatietyDuration; label: string }> = [
@@ -95,10 +110,10 @@ function SegmentedButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-colors",
+        "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-all duration-200 ease-out",
         selected
-          ? activeClass ?? "border-primary bg-primary/10 text-primary"
-          : "border-input bg-card text-muted-foreground hover:bg-muted"
+          ? activeClass ?? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:border-blue-400/40 dark:bg-blue-400/10 dark:text-blue-400"
+          : "border-slate-200/70 bg-white text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-800"
       )}
     >
       {children}
@@ -284,7 +299,7 @@ export function MealLogDialog({
         </DialogHeader>
 
         {/* v3.0 模式切换：吃前排雷 / 餐后打卡 */}
-        <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+        <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-slate-800/60">
           {(
             [
               { key: "plan", label: "吃前规划 · 排雷" },
@@ -296,10 +311,10 @@ export function MealLogDialog({
               type="button"
               onClick={() => setMode(t.key)}
               className={cn(
-                "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-200 ease-out",
                 mode === t.key
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               )}
             >
               {t.label}
@@ -314,7 +329,7 @@ export function MealLogDialog({
           {/* 餐食照片 + AI 识别 */}
           <div className="space-y-2">
             <Label>
-              餐食照片 <span className="text-xs font-normal text-muted-foreground">(拍照后 AI 自动估算热量与宏量)</span>
+              餐食照片 <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(拍照后 AI 自动估算热量与宏量)</span>
             </Label>
             <input
               ref={fileRef}
@@ -327,23 +342,23 @@ export function MealLogDialog({
               }}
             />
             {imageUrl ? (
-              <div className="flex items-center gap-3 rounded-lg border p-2">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200/70 p-2 dark:border-white/[0.08]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageUrl}
                   alt="餐食照片"
-                  className="h-16 w-16 rounded-md object-cover"
+                  className="h-16 w-16 shrink-0 rounded-lg object-cover"
                 />
-                <div className="flex-1 text-xs text-muted-foreground">
+                <div className="min-w-0 flex-1 text-xs text-slate-500 dark:text-slate-400">
                   {analyzing ? (
-                    <span className="flex items-center gap-1.5 text-success">
+                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       AI 正在分析菜品与热量…
                     </span>
                   ) : (
                     <button
                       type="button"
-                      className="flex items-center gap-1 font-medium text-primary hover:underline"
+                      className="flex items-center gap-1 font-medium text-blue-600 hover:underline dark:text-blue-400"
                       onClick={() => fileRef.current?.click()}
                     >
                       <ImagePlus className="h-3.5 w-3.5" />
@@ -354,7 +369,7 @@ export function MealLogDialog({
                 <button
                   type="button"
                   aria-label="移除照片"
-                  className="-m-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="-m-1 rounded-md p-1 text-slate-400 transition-all duration-200 ease-out hover:bg-slate-500/10 hover:text-slate-900 dark:hover:text-white"
                   onClick={() => {
                     setImageUrl(undefined);
                     setAnalysisError(null);
@@ -368,21 +383,21 @@ export function MealLogDialog({
                 type="button"
                 disabled={analyzing}
                 onClick={() => fileRef.current?.click()}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-info/40 bg-info/10 px-4 py-3 text-sm font-medium text-info transition-colors hover:bg-info/15 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm font-medium text-sky-600 transition-all duration-200 ease-out hover:bg-sky-500/15 disabled:opacity-60 dark:border-sky-400/40 dark:bg-sky-400/10 dark:text-sky-400"
               >
                 <Camera className="h-4 w-4" />
                 拍摄 / 上传餐食照片
               </button>
             )}
-            {analysisError && <p className="break-words text-xs text-destructive">{analysisError}</p>}
+            {analysisError && <p className="break-words text-xs text-rose-600 dark:text-rose-400">{analysisError}</p>}
           </div>
 
           {/* AI 进食顺序建议 */}
           {sequenceAdvice && (
-            <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3 text-xs text-info">
-              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" />
+            <div className="flex items-start gap-2 rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 text-xs text-slate-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-slate-300">
+              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
               <span className="min-w-0 break-words">
-                <span className="font-semibold">进食顺序建议：</span>
+                <span className="font-semibold text-sky-600 dark:text-sky-400">进食顺序建议：</span>
                 {sequenceAdvice}
               </span>
             </div>
@@ -415,14 +430,14 @@ export function MealLogDialog({
               <div className="grid grid-cols-3 gap-2 xs:grid-cols-5">
                 {NUTRITION_FIELDS.map((f) => (
                   <div key={String(f.key)}>
-                    <div className="mb-1 text-center text-xs font-medium text-muted-foreground">
+                    <div className="mb-1 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
                       {f.label}
                     </div>
                     <Input
                       type="number"
                       inputMode="decimal"
                       min="0"
-                      className="h-9 px-1 text-center text-xs tabular"
+                      className="h-9 px-1 text-center text-xs tabular-nums"
                       value={nutrition[f.key] ?? 0}
                       onChange={(e) =>
                         setNutrition((n) =>
@@ -432,7 +447,7 @@ export function MealLogDialog({
                         )
                       }
                     />
-                    <div className="mt-0.5 text-center text-xs text-muted-foreground">
+                    <div className="mt-0.5 text-center text-xs text-slate-400 dark:text-slate-500">
                       {f.unit}
                     </div>
                   </div>
@@ -466,11 +481,11 @@ export function MealLogDialog({
             ].map((row) => (
               <div
                 key={row.title}
-                className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 p-3 dark:border-white/[0.08]"
               >
                 <div>
-                  <div className="text-sm font-medium">{row.title}</div>
-                  <div className="text-xs text-muted-foreground">{row.desc}</div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">{row.title}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{row.desc}</div>
                 </div>
                 <Switch checked={row.checked} onCheckedChange={row.onChange} />
               </div>
@@ -496,7 +511,7 @@ export function MealLogDialog({
 
           <div className="space-y-1.5">
             <Label>
-              抗饿预期时长 <span className="text-xs font-normal text-muted-foreground">(选填)</span>
+              抗饿预期时长 <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(选填)</span>
             </Label>
             <div className="flex gap-2">
               {SATIETY_OPTIONS.map((opt) => (
@@ -522,24 +537,24 @@ export function MealLogDialog({
               onChange={(e) => setFoodSummary(e.target.value)}
             />
             {textEstimating && (
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 AI 正在估算热量与宏量营养素…
               </p>
             )}
             {textEstimateError && !textEstimating && (
-              <p className="break-words text-xs text-destructive">{textEstimateError}</p>
+              <p className="break-words text-xs text-rose-600 dark:text-rose-400">{textEstimateError}</p>
             )}
           </div>
 
           {/* 实时稳糖分 */}
-          <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
-            <div className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-slate-800/40">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               单餐稳糖得分实时预估（顺序 30 · 控碳 30 · 餐后活动 20 · 神经状态 20）
             </div>
             <div
               className={cn(
-                "ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-lg font-bold tabular-nums",
+                "ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-lg font-bold tabular-nums tracking-tight",
                 SCORE_TONE_CLASS[tone]
               )}
             >

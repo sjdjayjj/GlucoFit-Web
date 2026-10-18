@@ -57,24 +57,29 @@ export function CompositionCharts() {
   return (
     <Card>
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-2 space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            <LineChart className="h-5 w-5 text-primary" />
-            体成分多维趋势
-          </CardTitle>
-          <CardDescription>关注脂肪量下降与蛋白质量维持，判断减重是否掉肌</CardDescription>
+        <div className="flex items-start gap-3">
+          <div
+            aria-hidden
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400"
+          >
+            <LineChart className="h-4 w-4" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle>体成分多维趋势</CardTitle>
+            <CardDescription>关注脂肪量下降与蛋白质量维持，判断减重是否掉肌</CardDescription>
+          </div>
         </div>
-        <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
+        <div className="flex w-full gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 sm:w-auto dark:border-white/10 dark:bg-slate-800/60">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => setRange(opt.value)}
               className={cn(
-                "min-h-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                "min-h-10 flex-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ease-out sm:flex-none sm:px-2.5",
                 range === opt.value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               )}
             >
               {opt.label}
@@ -85,7 +90,7 @@ export function CompositionCharts() {
 
       <CardContent className="space-y-6">
         {data.length === 0 ? (
-          <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-48 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
             该周期内暂无体成分记录
           </div>
         ) : (
@@ -94,7 +99,7 @@ export function CompositionCharts() {
             {hydration && (
               <div
                 className={cn(
-                  "flex items-start gap-2.5 rounded-lg border p-3 text-xs leading-relaxed break-words",
+                  "flex items-start gap-2.5 rounded-xl border p-3 text-xs leading-relaxed break-words",
                   VERDICT_STYLE[hydration.verdict].className,
                   VERDICT_DARK_CLASS[hydration.verdict]
                 )}
@@ -124,7 +129,9 @@ export function CompositionCharts() {
 
             {/* 图表 1：体重 + 体脂率 双轴 */}
             <div>
-              <div className="mb-2 text-xs font-medium text-muted-foreground">体重 (kg) 与 体脂率 (%) 走势</div>
+              <div className="mb-2 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+                体重 (kg) 与 体脂率 (%) 走势
+              </div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} vertical={false} />
@@ -185,7 +192,9 @@ export function CompositionCharts() {
 
             {/* 图表 2：脂肪量 vs 蛋白质量 */}
             <div>
-              <div className="mb-2 text-xs font-medium text-muted-foreground">脂肪量 vs 蛋白质量 (kg) — 减重是否掉肌</div>
+              <div className="mb-2 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+                脂肪量 vs 蛋白质量 (kg) — 减重是否掉肌
+              </div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} vertical={false} />

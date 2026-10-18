@@ -27,10 +27,25 @@ import { fmtDate, shortTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 const PLATEAU_BADGE: Record<PlateauStatus, { label: string; className: string }> = {
-  improving: { label: "代谢向好", className: "border-success/30 bg-success/10 text-success" },
-  plateau: { label: "代谢平台期", className: "border-warning/30 bg-warning/10 text-warning" },
-  regressing: { label: "代谢退步预警", className: "border-destructive/30 bg-destructive/10 text-destructive" },
-  insufficient_data: { label: "数据不足", className: "border-border bg-muted text-muted-foreground" },
+  improving: {
+    label: "代谢向好",
+    className:
+      "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400",
+  },
+  plateau: {
+    label: "代谢平台期",
+    className:
+      "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-400",
+  },
+  regressing: {
+    label: "代谢退步预警",
+    className:
+      "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-400",
+  },
+  insufficient_data: {
+    label: "数据不足",
+    className: "border-slate-200/80 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-400",
+  },
 };
 
 const CACHE_KEY = "glucofit-ai-diagnosis-cache";
@@ -195,17 +210,22 @@ export function AIDiagnosisCard() {
   return (
     <Card className="flex flex-col">
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-2 space-y-0">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-primary" />
-            AI 代谢诊断
-          </CardTitle>
-          <CardDescription className="flex items-center gap-1.5">
-            <Clock className="h-3 w-3" />
-            {generating
-              ? "AI 正在分析近 7 天代谢数据…"
-              : generatedLabel ?? "暂无历史分析，可立即生成一次"}
-          </CardDescription>
+        <div className="flex items-start gap-3">
+          <div
+            aria-hidden
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:bg-violet-400/10 dark:text-violet-400"
+          >
+            <Bot className="h-4 w-4" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle>AI 代谢诊断</CardTitle>
+            <CardDescription className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
+              {generating
+                ? "AI 正在分析近 7 天代谢数据…"
+                : generatedLabel ?? "暂无历史分析，可立即生成一次"}
+            </CardDescription>
+          </div>
         </div>
         <Button
           variant="outline"
@@ -224,7 +244,7 @@ export function AIDiagnosisCard() {
 
       <CardContent className="flex flex-1 flex-col gap-3">
         {justAutoRun && !generating && (
-          <p className="flex items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 p-2 text-[11px] text-success">
+          <p className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2 text-[11px] text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400">
             <BadgeCheck className="h-3.5 w-3.5" />
             今日代谢简报已就绪（每日仅自动生成一次）
           </p>
@@ -241,19 +261,19 @@ export function AIDiagnosisCard() {
             <MiniStat label="7 天稳糖均分" value={`${stats.avgScore} 分 · 嗜睡 ${stats.foodComaCount} 次`} />
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400 dark:border-white/10 dark:text-slate-500">
             近 7 天暂无记录，请先录入体脂秤数据与饮食打卡
           </div>
         )}
 
         {!configured && stats && (
-          <p className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed break-words text-warning">
+          <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-relaxed break-words text-amber-600 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-400">
             请先在「设置 → AI 模型」中配置 API Key 后再生成诊断。
           </p>
         )}
 
         {error && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs leading-relaxed break-words text-destructive">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-xs leading-relaxed break-words text-rose-600 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-400">
             <span className="flex items-center gap-1.5">
               <TriangleAlert className="h-3.5 w-3.5 shrink-0" />
               {error}
@@ -283,35 +303,35 @@ export function AIDiagnosisCard() {
               </span>
             </div>
 
-            <p className="rounded-lg border bg-muted/40 p-3 text-sm leading-relaxed">
+            <p className="rounded-xl border border-slate-200/70 bg-slate-50/60 p-3 text-sm leading-relaxed text-slate-700 dark:border-white/[0.06] dark:bg-slate-800/40 dark:text-slate-300">
               {report.overall}
             </p>
 
             {report.muscleStatus && (
-              <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed break-words text-foreground">
-                <span className="font-semibold text-warning">瘦体重 / 掉肌分析：</span>
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-relaxed break-words text-slate-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-slate-300">
+                <span className="font-semibold text-amber-600 dark:text-amber-400">瘦体重 / 掉肌分析：</span>
                 {report.muscleStatus}
               </div>
             )}
             {report.insulinStatus && (
-              <div className="rounded-lg border border-info/30 bg-info/10 p-3 text-xs leading-relaxed break-words text-foreground">
-                <span className="font-semibold text-info">胰岛素敏感度：</span>
+              <div className="rounded-lg border border-sky-500/20 bg-sky-500/10 p-3 text-xs leading-relaxed break-words text-slate-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-slate-300">
+                <span className="font-semibold text-sky-600 dark:text-sky-400">胰岛素敏感度：</span>
                 {report.insulinStatus}
               </div>
             )}
 
             {report.actions.length > 0 && (
               <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <Waves className="h-3.5 w-3.5 text-primary" />
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
+                  <Waves className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                   本周行动建议
                 </div>
                 {report.actions.map((action, i) => (
                   <div
                     key={i}
-                    className="flex items-start gap-2 rounded-lg border p-2.5 text-xs leading-relaxed break-words"
+                    className="flex items-start gap-2 rounded-lg border border-slate-200/70 bg-slate-50/60 p-2.5 text-xs leading-relaxed break-words text-slate-700 dark:border-white/[0.06] dark:bg-slate-800/40 dark:text-slate-300"
                   >
-                    <BadgeCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                    <BadgeCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     {action}
                   </div>
                 ))}
@@ -321,15 +341,15 @@ export function AIDiagnosisCard() {
         )}
 
         {!report && !generating && !error && stats && configured && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 text-center">
-            <Bot className="h-7 w-7 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/10">
+            <Bot className="h-7 w-7 text-slate-300 dark:text-slate-600" />
+            <p className="text-sm text-slate-400 dark:text-slate-500">
               点击「重新评估」生成你的第一份周度代谢诊断
             </p>
           </div>
         )}
 
-        <p className="mt-auto text-[10px] text-muted-foreground">
+        <p className="mt-auto text-[10px] text-slate-400 dark:text-slate-500">
           诊断基于近 7 天体成分与稳糖行为数据；每日首次访问自动更新，其余时间仅读取缓存。
         </p>
       </CardContent>
@@ -339,9 +359,11 @@ export function AIDiagnosisCard() {
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-muted/40 p-2.5">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="text-sm font-semibold tabular-nums">{value}</div>
+    <div className="rounded-xl border border-slate-200/70 bg-slate-50/60 p-2.5 dark:border-white/[0.06] dark:bg-slate-800/40">
+      <div className="text-[11px] text-slate-400 dark:text-slate-500">{label}</div>
+      <div className="text-sm font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
+        {value}
+      </div>
     </div>
   );
 }
