@@ -1,27 +1,32 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/**
+ * Smartisan 按钮（Elevated Button 18:7 / Small 147:413 / Outlined 26:13）：
+ * 主按钮 = 纵向蓝渐变 + 0.8px 深蓝描边 + 短投影；按下瞬时变纯色 #3a60c5。
+ * 白色/描边按钮按下渐变上下反转（像被按进去）。无涟漪、无 hover 缩放。
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-b from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-600/25 hover:from-blue-500 hover:to-indigo-500 hover:shadow-card-hover",
+          "s-grad-primary text-white border-[0.8px] border-[#3a5fc9] shadow-s-btn active:bg-[#3a60c5] active:border-[#3157bd] dark:active:border-[#3d63c4]",
         destructive:
-          "bg-rose-600 text-white shadow-sm shadow-rose-600/25 hover:bg-rose-500",
+          "s-grad-danger text-white border-[0.8px] border-[#d2463c] active:bg-[#df4f46] active:border-[#c43c33]",
         outline:
-          "border border-slate-200/80 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-slate-800/60 dark:hover:text-slate-100",
+          "h-[30px] rounded-[4px] border-[0.5px] border-[#d3d3d3] bg-transparent text-[#606060] dark:text-[#a8a8a8] dark:border-[#4a4a4a] active:bg-muted dark:active:bg-secondary",
         secondary:
-          "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
+          "s-grad-white s-grad-white-press border-[0.8px] border-border text-title-other shadow-none",
         ghost:
-          "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100",
-        link: "text-blue-600 underline-offset-4 hover:underline dark:text-blue-400",
+          "text-muted-foreground active:bg-muted active:text-foreground",
+        link: "text-accent-foreground underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-lg px-3 text-[13px]",
+        sm: "h-[30px] rounded-[4px] px-3 text-[13px] border-[0.4px]",
         lg: "h-11 px-8",
         icon: "h-10 w-10",
       },

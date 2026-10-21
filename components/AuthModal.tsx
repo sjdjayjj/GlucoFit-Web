@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -131,7 +131,7 @@ export function AuthModal({
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-slate-800/60">
+              <div className="flex gap-1 rounded-[8px] border border-border bg-muted/80 p-1">
                 {(
                   [
                     { key: "login", label: "登录" },
@@ -143,10 +143,10 @@ export function AuthModal({
                     type="button"
                     onClick={() => setMode(t.key)}
                     className={cn(
-                      "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-200 ease-out",
+                      "flex-1 rounded-lg px-2 py-1.5 text-xs font-medium",
                       mode === t.key
-                        ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground active:bg-muted"
                     )}
                   >
                     {t.label}
@@ -181,7 +181,7 @@ export function AuthModal({
               </div>
 
               {error && (
-                <p className="break-words rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400">
+                <p className="break-words rounded-lg bg-[#ffe7e5] px-3 py-2 text-sm text-[#c23430] dark:bg-[#3a2422] dark:text-[#e5645a]">
                   {error}
                 </p>
               )}
@@ -202,7 +202,7 @@ export function AuthModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <BadgeCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <BadgeCheck className="h-5 w-5 text-[#54761e] dark:text-[#9cc35c]" />
                 登录成功
               </DialogTitle>
               <DialogDescription>
@@ -210,12 +210,12 @@ export function AuthModal({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="break-words rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 text-xs leading-relaxed text-slate-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-slate-300">
+            <div className="break-words rounded-[8px] border border-[#c9d8f7] bg-accent p-3 text-xs leading-relaxed text-foreground dark:border-[#3d5480]">
               合并规则：按记录 ID 去重、时间新者胜，本地与云端数据互不覆盖丢失。
             </div>
 
             {error && (
-              <p className="break-words rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400">
+              <p className="break-words rounded-lg bg-[#ffe7e5] px-3 py-2 text-sm text-[#c23430] dark:bg-[#3a2422] dark:text-[#e5645a]">
                 {error}
               </p>
             )}

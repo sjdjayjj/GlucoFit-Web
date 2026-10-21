@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import {
@@ -76,7 +76,7 @@ export function PreMealRadar() {
       {/* 输入区：菜单文字 / 照片 */}
       <div className="space-y-2">
         <Label>
-          眼前这顿饭 <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(外卖截图 / 菜单拍照 / 手动输入)</span>
+          眼前这顿饭 <span className="text-xs font-normal text-muted-foreground">(外卖截图 / 菜单拍照 / 手动输入)</span>
         </Label>
         <Textarea
           rows={2}
@@ -121,7 +121,7 @@ export function PreMealRadar() {
       </Button>
 
       {error && (
-        <p className="text-xs leading-relaxed break-words text-rose-600 dark:text-rose-400">{error}</p>
+        <p className="text-xs leading-relaxed break-words text-[#c23430] dark:text-[#e5645a]">{error}</p>
       )}
 
       {/* 排雷结果 */}
@@ -131,35 +131,35 @@ export function PreMealRadar() {
           <div className="grid grid-cols-1 gap-2">
             <RadarZone
               tone="safe"
-              icon={<ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+              icon={<ShieldCheck className="h-4 w-4 text-[#54761e] dark:text-[#9cc35c]" />}
               title="稳糖安全区"
               items={result.safeFoods}
-              itemClass="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-400 dark:border-emerald-400/20"
+              itemClass="bg-[#eef5e2] text-[#54761e] border-[#79ad31]/30 dark:bg-[#2a3320] dark:text-[#9cc35c] dark:border-[#79ad31]/30"
             />
             <RadarZone
               tone="warn"
-              icon={<Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
+              icon={<Sparkles className="h-4 w-4 text-[#96641c] dark:text-[#dba75f]" />}
               title="隐藏刺客区"
               items={result.hiddenThreats}
-              itemClass="bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-400 dark:border-amber-400/20"
+              itemClass="bg-[#fff5d9] text-[#96641c] border-[#96641c]/30 dark:bg-[#362e1c] dark:text-[#dba75f] dark:border-[#96641c]/30"
             />
             <RadarZone
               tone="bad"
-              icon={<ShieldAlert className="h-4 w-4 text-rose-600 dark:text-rose-400" />}
+              icon={<ShieldAlert className="h-4 w-4 text-[#c23430] dark:text-[#e5645a]" />}
               title="胰岛素炸弹"
               items={result.insulinBombs}
-              itemClass="bg-rose-500/10 text-rose-600 border-rose-500/20 dark:bg-rose-400/10 dark:text-rose-400 dark:border-rose-400/20"
+              itemClass="bg-[#ffe7e5] text-[#c23430] border-[#cf382e]/30 dark:bg-[#3a2422] dark:text-[#e5645a] dark:border-[#cf382e]/30"
             />
           </div>
 
           {/* 主食拳头量化 */}
-          <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-sm dark:border-blue-400/20 dark:bg-blue-400/5">
-            <span className="flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
+          <div className="flex items-center justify-between rounded-[10px] border border-[#5b87eb]/30 bg-accent p-3 text-sm dark:border-[#5b87eb]/30 dark:bg-[#2a3552]">
+            <span className="flex items-center gap-1.5 font-medium text-[#3861c6] dark:text-[#7fa3f0]">
               <Utensils className="h-4 w-4" />
               主食建议
             </span>
-            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-              <span className="text-base font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
+            <span className="text-xs tabular-nums text-muted-foreground">
+              <span className="text-base font-semibold tabular-nums tracking-tight text-foreground">
                 {Math.min(result.stapleFist, carbFistLimit)}
               </span>{" "}
               拳 ≈ {result.stapleGrams}g
@@ -169,8 +169,8 @@ export function PreMealRadar() {
 
           {/* 10 秒战术剧本 */}
           {result.script.length > 0 && (
-            <div className="space-y-1.5 rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 dark:border-sky-400/20 dark:bg-sky-400/10">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-600 dark:text-sky-400">
+            <div className="space-y-1.5 rounded-[10px] border border-[#5b87eb]/30 bg-accent p-3 dark:border-[#5b87eb]/30 dark:bg-[#2a3552]">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#3861c6] dark:text-[#7fa3f0]">
                 <Radar className="h-3.5 w-3.5" />
                 10 秒进食战术剧本
               </div>
@@ -178,16 +178,16 @@ export function PreMealRadar() {
                 {result.script.map((line, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-xs leading-relaxed break-words text-slate-700 dark:text-slate-300"
+                    className="flex items-start gap-2 text-xs leading-relaxed break-words text-foreground"
                   >
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5b87eb] text-[10px] font-bold text-white">
                       {i + 1}
                     </span>
                     {line}
                   </li>
                 ))}
               </ol>
-              <p className="flex items-center gap-1 pt-1 text-[11px] leading-relaxed break-words text-sky-600 dark:text-sky-400">
+              <p className="flex items-center gap-1 pt-1 text-[11px] leading-relaxed break-words text-[#3861c6] dark:text-[#7fa3f0]">
                 <CircleCheck className="h-3 w-3" />
                 开吃吧！吃完后回到「餐后打卡」页记录行为与反应即可。
               </p>
@@ -214,7 +214,7 @@ function RadarZone({
   if (items.length === 0) return null;
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
         {icon}
         {title}
       </div>

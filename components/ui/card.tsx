@@ -2,9 +2,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Argon 卡片底座：
- * 纯白（深色石板玻璃）+ rounded-2xl + 1px 微边框 + 内高光 ring + 漫反射环境光阴影。
- * 可点击卡片在使用处叠加 hover:-translate-y-0.5 hover:shadow-card-hover。
+ * Smartisan 卡片（List 卡片 248:872）：
+ * 白底 + 10px 圆角 + 0.8px #e2e2e2 描边 + 极淡大范围投影 0 10px 16px rgba(0,0,0,.04)。
+ * 无内高光 ring、无浮起位移。
  */
 const Card = React.forwardRef<
   HTMLDivElement,
@@ -13,7 +13,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-2xl border border-slate-200/70 bg-white text-slate-900 shadow-card ring-1 ring-inset ring-slate-900/[0.03] dark:border-white/[0.07] dark:bg-slate-900/80 dark:text-slate-50 dark:shadow-none dark:ring-white/[0.04]",
+      "rounded-[10px] border-[0.8px] border-border bg-card text-card-foreground shadow-card dark:shadow-none",
       className
     )}
     {...props}
@@ -27,7 +27,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-5 pb-3 sm:p-6 sm:pb-3", className)}
+    className={cn("flex flex-col space-y-1 p-5 pb-3 sm:p-6 sm:pb-3", className)}
     {...props}
   />
 ));
@@ -40,7 +40,7 @@ const CardTitle = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "text-[15px] font-semibold leading-snug tracking-tight text-slate-900 dark:text-slate-50 sm:text-base",
+      "text-[15px] font-semibold leading-snug text-foreground sm:text-base",
       className
     )}
     {...props}
@@ -55,7 +55,7 @@ const CardDescription = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "text-[13px] leading-relaxed text-slate-500 dark:text-slate-400",
+      "text-[13px] leading-relaxed text-muted-foreground",
       className
     )}
     {...props}

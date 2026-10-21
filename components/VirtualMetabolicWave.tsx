@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -116,12 +116,12 @@ export function VirtualMetabolicWave() {
 
   const levelDot =
     currentLevel.glucoseLevel === "spike"
-      ? "bg-rose-500 dark:bg-rose-400"
+      ? "bg-[#cf382e] dark:bg-[#c95046]"
       : currentLevel.glucoseLevel === "crash"
-        ? "bg-amber-500 dark:bg-amber-400"
+        ? "bg-[#96641c] dark:bg-[#dba75f]"
         : currentLevel.glucoseLevel === "moderate"
-          ? "bg-sky-500 dark:bg-sky-400"
-          : "bg-emerald-500 dark:bg-emerald-400";
+          ? "bg-[#5b87eb] dark:bg-[#7fa3f0]"
+          : "bg-[#79ad31] dark:bg-[#9cc35c]";
 
   return (
     <Card className="relative overflow-hidden">
@@ -129,7 +129,7 @@ export function VirtualMetabolicWave() {
         <div className="flex items-start gap-3">
           <div
             aria-hidden
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400"
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground"
           >
             <Waves className="h-4 w-4" />
           </div>
@@ -138,7 +138,7 @@ export function VirtualMetabolicWave() {
             <CardDescription>虚拟 CGM 实时推演 · 未来 3 小时预测（虚线）</CardDescription>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-300">
+        <div className="flex items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
           <span
             className={cn(
               "h-1.5 w-1.5 rounded-full",
@@ -154,7 +154,7 @@ export function VirtualMetabolicWave() {
       <CardContent className="space-y-3">
         {/* 反应性低血糖提前预警 */}
         {projectedCrash && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-400">
+          <div className="flex items-start gap-2 rounded-lg border border-[#96641c]/30 bg-[#fff5d9] p-2.5 text-xs text-[#96641c] dark:border-[#96641c]/30 dark:bg-[#362e1c] dark:text-[#dba75f]">
             <AlarmClock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               <span className="font-semibold">提前预警：</span>
@@ -166,8 +166,8 @@ export function VirtualMetabolicWave() {
 
         {/* 餐后急救纠偏：冲高期动态脉冲按钮 */}
         {activeSpike && (
-          <div className="flex flex-col gap-2 rounded-lg border border-rose-500/20 bg-rose-500/10 p-2.5 dark:border-rose-400/20 dark:bg-rose-400/10 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2 text-xs text-rose-700 dark:text-rose-400">
+          <div className="flex flex-col gap-2 rounded-lg border border-[#cf382e]/30 bg-[#ffe7e5] p-2.5 dark:border-[#cf382e]/30 dark:bg-[#3a2422] sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2 text-xs text-[#c23430] dark:text-[#e5645a]">
               <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-pulse" />
               <span>
                 <span className="font-semibold">血糖冲高进行中</span>
@@ -175,7 +175,7 @@ export function VirtualMetabolicWave() {
               </span>
             </div>
             {rescued === activeSpike.id ? (
-              <span className="flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400">
+              <span className="flex shrink-0 items-center gap-1 rounded-full border border-[#79ad31]/30 bg-[#eef5e2] px-3 py-1.5 text-xs font-semibold text-[#54761e] dark:border-[#79ad31]/30 dark:bg-[#2a3320] dark:text-[#9cc35c]">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 已削峰 · 曲线压平中
               </span>
@@ -183,7 +183,7 @@ export function VirtualMetabolicWave() {
               <Button
                 size="sm"
                 onClick={handleRescue}
-                className="shrink-0 animate-pulse bg-gradient-to-b from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/25 hover:from-amber-400 hover:to-orange-400"
+                className="shrink-0 animate-pulse s-grad-danger text-white border-[0.8px] border-[#d2463c]"
               >
                 <Zap className="h-3.5 w-3.5" />
                 开启 15 分钟提踵/快走 · 削峰 35%
@@ -193,24 +193,24 @@ export function VirtualMetabolicWave() {
         )}
 
         {/* 双波浪潮汐图：白卡内嵌深色观测面板（Oura 式） */}
-        <div className="rounded-xl bg-gradient-to-b from-slate-900 to-slate-950 p-2 pt-3 ring-1 ring-inset ring-white/10 dark:from-slate-950 dark:to-black">
+        <div className="rounded-[10px] border-[0.8px] border-border bg-secondary p-2 pt-3">
           <div className="h-[200px] sm:h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 4, right: 6, bottom: 0, left: -18 }}>
               <defs>
                 <linearGradient id="glucoseFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="#0F4C81" stopOpacity={0.05} />
+                  <stop offset="0%" stopColor="#5b87eb" stopOpacity={0.18} />
+                  <stop offset="100%" stopColor="#5b87eb" stopOpacity={0.02} />
                 </linearGradient>
                 <linearGradient id="insulinFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.02} />
+                  <stop offset="0%" stopColor="#93b2f7" stopOpacity={0.18} />
+                  <stop offset="100%" stopColor="#93b2f7" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eeeeee" vertical={false} />
               <XAxis
                 dataKey="time"
-                tick={{ fontSize: 10, fill: "#7dd3fc" }}
+                tick={{ fontSize: 10, fill: "#9d9d9d" }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
@@ -219,7 +219,7 @@ export function VirtualMetabolicWave() {
               <YAxis
                 yAxisId="glucose"
                 domain={[60, 190]}
-                tick={{ fontSize: 10, fill: "#7dd3fc" }}
+                tick={{ fontSize: 10, fill: "#9d9d9d" }}
                 tickLine={false}
                 axisLine={false}
                 />
@@ -227,7 +227,7 @@ export function VirtualMetabolicWave() {
                 yAxisId="insulin"
                 orientation="right"
                 domain={[0, 100]}
-                tick={{ fontSize: 10, fill: "#c4b5fd" }}
+                tick={{ fontSize: 10, fill: "#9d9d9d" }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
@@ -236,12 +236,12 @@ export function VirtualMetabolicWave() {
               <Tooltip
                 contentStyle={{
                   borderRadius: 8,
-                  border: "1px solid #164e63",
-                  background: "#0b1c30",
+                  border: "1px solid #e2e2e2",
+                  background: "#ffffff",
                   fontSize: 12,
-                  color: "#e0f2fe",
+                  color: "#333333",
                 }}
-                labelStyle={{ color: "#7dd3fc" }}
+                labelStyle={{ color: "#7f7f7f" }}
                 formatter={(
                   value: number | string,
                   name: string
@@ -252,43 +252,43 @@ export function VirtualMetabolicWave() {
               />
               <Legend
                 formatter={(value: string) => value}
-                wrapperStyle={{ fontSize: 11, color: "#bae6fd" }}
+                wrapperStyle={{ fontSize: 11, color: "#7f7f7f" }}
               />
               {/* 冲高风暴区（红）与 crash 深谷（琥珀）参照线 */}
               <ReferenceLine
                 yAxisId="glucose"
                 y={SPIKE_THRESHOLD}
-                stroke="#f87171"
+                stroke="#e5645a"
                 strokeDasharray="4 4"
                 strokeOpacity={0.6}
               />
               <ReferenceLine
                 yAxisId="glucose"
                 y={CRASH_THRESHOLD}
-                stroke="#fbbf24"
+                stroke="#96641c"
                 strokeDasharray="4 4"
                 strokeOpacity={0.5}
               />
               <ReferenceLine
                 yAxisId="glucose"
                 y={GLUCOSE_BASELINE}
-                stroke="#38bdf8"
+                stroke="#93b2f7"
                 strokeOpacity={0.35}
               />
               {/* 当前时刻分界 */}
               <ReferenceLine
                 yAxisId="glucose"
                 x={nearestTick(nowMinutes)}
-                stroke="#e0f2fe"
+                stroke="#9d9d9d"
                 strokeOpacity={0.5}
-                label={{ value: "现在", fill: "#e0f2fe", fontSize: 10, position: "top" }}
+                label={{ value: "现在", fill: "#7f7f7f", fontSize: 10, position: "top" }}
               />
               {/* 预测区间底色 */}
               <ReferenceArea
                 yAxisId="glucose"
                 x1={nearestTick(nowMinutes)}
                 x2="24:00"
-                fill="#38bdf8"
+                fill="#5b87eb"
                 fillOpacity={0.05}
               />
               {/* 胰岛素水位（紫潮） */}
@@ -297,7 +297,7 @@ export function VirtualMetabolicWave() {
                 type="monotone"
                 dataKey="insulinPast"
                 name="胰岛素水位"
-                stroke="#a78bfa"
+                stroke="#93b2f7"
                 strokeWidth={1.5}
                 fill="url(#insulinFill)"
                 connectNulls={false}
@@ -309,7 +309,7 @@ export function VirtualMetabolicWave() {
                 type="monotone"
                 dataKey="insulinFuture"
                 name="胰岛素预测"
-                stroke="#a78bfa"
+                stroke="#93b2f7"
                 strokeWidth={1.5}
                 strokeDasharray="5 4"
                 fill="none"
@@ -323,7 +323,7 @@ export function VirtualMetabolicWave() {
                 type="monotone"
                 dataKey="glucosePast"
                 name="虚拟血糖"
-                stroke="#7dd3fc"
+                stroke="#5b87eb"
                 strokeWidth={2.5}
                 fill="url(#glucoseFill)"
                 connectNulls={false}
@@ -335,7 +335,7 @@ export function VirtualMetabolicWave() {
                 type="monotone"
                 dataKey="glucoseFuture"
                 name="血糖预测"
-                stroke="#7dd3fc"
+                stroke="#5b87eb"
                 strokeWidth={2}
                 strokeDasharray="6 5"
                 dot={false}
@@ -345,30 +345,30 @@ export function VirtualMetabolicWave() {
             </ComposedChart>
           </ResponsiveContainer>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-2 pb-1 text-[10px] text-slate-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-2 pb-1 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm bg-sky-300" /> 血糖 (mg/dL) · 蓝潮
+              <span className="h-2 w-2 rounded-sm bg-[#5b87eb]" /> 血糖 (mg/dL) · 蓝潮
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm bg-violet-400" /> 胰岛素水位 · 紫潮
+              <span className="h-2 w-2 rounded-sm bg-[#93b2f7]" /> 胰岛素水位 · 紫潮
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm bg-red-400" /> 140 冲高线
+              <span className="h-2 w-2 rounded-sm bg-[#e5645a]" /> 140 冲高线
             </span>
             <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm bg-amber-400" /> 78 深谷线
+              <span className="h-2 w-2 rounded-sm bg-[#96641c]" /> 78 深谷线
             </span>
           </div>
         </div>
 
         {todayMeals.length === 0 && (
-          <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+          <p className="text-center text-xs text-muted-foreground">
             今日尚无打卡，当前为空腹燃脂基线。打卡第一餐后，曲线将实时推演你的代谢潮汐。
           </p>
         )}
 
         {activeSpike && rescued === activeSpike.id && (
-          <p className={cn("flex items-center justify-center gap-1 text-xs text-emerald-600 dark:text-emerald-400")}>
+          <p className={cn("flex items-center justify-center gap-1 text-xs text-[#54761e] dark:text-[#9cc35c]")}>
             <Footprints className="h-3.5 w-3.5" />
             GLUT4 已激活，血糖正被肌肉非胰岛素依赖摄取，预计 30 分钟内回落至燃脂区。
           </p>

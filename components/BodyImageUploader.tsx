@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { CheckCircle2, ImagePlus, Loader2 } from "lucide-react";
@@ -64,7 +64,7 @@ export function BodyImageUploader({
         disabled={recognizing}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-600 transition-all duration-200 ease-out hover:bg-emerald-500/15 active:scale-[0.99] disabled:opacity-60 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-400 dark:hover:bg-emerald-400/15"
+          "flex w-full items-center justify-center gap-2 rounded-[10px] border border-dashed border-[#79ad31]/40 bg-[#eef5e2] px-4 py-3 text-sm font-medium text-[#54761e] disabled:opacity-60 dark:border-[#79ad31]/40 dark:bg-[#2a3320] dark:text-[#9cc35c]"
         )}
       >
         {recognizing ? (
@@ -86,10 +86,10 @@ export function BodyImageUploader({
           <img
             src={preview}
             alt="体脂秤报告截图"
-            className="h-12 w-12 rounded-lg border border-slate-200/70 object-cover dark:border-white/10"
+            className="h-12 w-12 rounded-lg border border-border object-cover"
           />
           {success && (
-            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1 text-xs font-medium text-[#54761e] dark:text-[#9cc35c]">
               <CheckCircle2 className="h-3.5 w-3.5" />
               识别完成，请核对下方数据
             </span>
@@ -97,7 +97,7 @@ export function BodyImageUploader({
         </div>
       )}
 
-      {error && <p className="break-words text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+      {error && <p className="break-words text-xs text-[#c23430] dark:text-[#e5645a]">{error}</p>}
     </div>
   );
 }

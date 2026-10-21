@@ -1,28 +1,29 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * Argon 语义徽章：达标 emerald / 预警 amber / 超标 rose / 提示 sky。
- * 统一 10% 底色 + 20% 边框 + 600/400 前景，深色自动提亮。
+ * Smartisan Chip（253:2478）：胶囊形、12px 半粗、低饱和配色、0.4px 细描边。
+ * 语义色映射到 Kit 的 Chip 五色 + 框架语义色（低饱和）。
  */
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors",
+  "inline-flex items-center gap-1 rounded-full border-[0.4px] px-2.5 py-0.5 text-xs font-semibold leading-none transition-none",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-blue-600 text-white",
+        default:
+          "bg-secondary text-[#646464] border-[#cecece] dark:bg-secondary dark:text-[#a8a8a8] dark:border-[#4a4a4a]",
         secondary:
-          "border-transparent bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+          "bg-[#f0f0f0] text-[#646464] border-[#dadada] dark:bg-secondary dark:text-[#a8a8a8] dark:border-[#4a4a4a]",
         outline:
-          "border-slate-200 text-slate-600 dark:border-white/10 dark:text-slate-300",
+          "bg-transparent text-muted-foreground border-border",
         success:
-          "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+          "bg-[#eef5e2] text-[#54761e] border-[#b9d189] dark:bg-[#2a3320] dark:text-[#9cc35c] dark:border-[#4a5c33]",
         warning:
-          "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+          "bg-[#fff5d9] text-[#96641c] border-[#ccb08c] dark:bg-[#362e1c] dark:text-[#dba75f] dark:border-[#5c4d2e]",
         danger:
-          "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400",
-        info: "border-sky-500/20 bg-sky-500/10 text-sky-600 dark:text-sky-400",
+          "bg-[#ffe7e5] text-[#c23430] border-[#eb7f77] dark:bg-[#3a2422] dark:text-[#f28a80] dark:border-[#63302c]",
+        info: "bg-card text-[#3f6ad4] border-[#93b2f7] dark:bg-[#1e2739] dark:text-[#7fa3f0] dark:border-[#3d5284]",
       },
     },
     defaultVariants: {

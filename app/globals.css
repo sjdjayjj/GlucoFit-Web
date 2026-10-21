@@ -3,68 +3,83 @@
 @tailwind utilities;
 
 /* ============================================================
-   GlucoFit Design System v5 · "Argon Clinical"
-   Apple Health + Oura Ring + Linear 混合现代健康科技风。
-   浅色：微冷灰底 #F8FAFC · 纯白卡片 · 漫反射环境光阴影
-   深色：深空蓝黑 #0B0F17 · 石板玻璃卡片 · 极细白色微边框
-   语义色：blue→indigo 主品牌 / emerald 达标 / amber 预警 / rose 超标
+   GlucoFit Design System v6 · "Smartisan Light-Skeuomorph"
+   基于 Smartisan OS UI Kit (Unofficial, CC BY 4.0, Smartisan R2 校对)：
+   轻拟物 · 细腻纵向渐变 · 0.4–0.8px 极细描边 · 内凹阴影
+   灰阶为主 + 低饱和蓝 #5b87eb 强调，不用纯黑文字、无毛玻璃、无涟漪
+   浅色：页面底 #f5f5f5 · 白卡片 · 极淡大范围投影
+   深色：按同一"低对比渐变 + 细描边 + 内凹"逻辑推导
    ============================================================ */
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* #F8FAFC slate-50 微冷灰 */
-    --foreground: 222 47% 11%; /* slate-900 */
+    --background: 0 0% 96%; /* #f5f5f5 Smartisan 页面底 */
+    --foreground: 0 0% 20%; /* #333333 Grey/900，不用纯黑 */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%; /* blue-600 #2563EB */
+    --popover-foreground: 0 0% 20%;
+    --primary: 221 79% 64%; /* #5b87eb 主按钮顶部蓝（图形用 ≥3:1） */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%; /* slate-100 */
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%; /* slate-500 */
-    --accent: 210 40% 96%;
-    --accent-foreground: 221 83% 40%;
-    --destructive: 347 77% 50%; /* rose-600 #E11D48 */
+    --secondary: 0 0% 98%; /* #fafafa Grey/100 */
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 95%; /* #f2f2f2 Grey/200 Divider */
+    --muted-foreground: 0 0% 43%; /* #6d6d6d 副文本（4.75:1 AA） */
+    --accent: 223 92% 95%; /* #e7edfd Blue/100 图标按钮底 */
+    --accent-foreground: 223 56% 50%; /* #3861c6 文字按钮（on accent 4.85:1） */
+    --destructive: 4 64% 50%; /* #cf382e 红警示（白字 4.93:1） */
     --destructive-foreground: 0 0% 100%;
-    --success: 161 94% 30%; /* emerald-600 */
-    --warning: 32 95% 44%; /* amber-600 */
-    --info: 199 89% 48%; /* sky-500 */
-    --border: 214 32% 91%; /* slate-200 */
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%; /* blue-500 */
+    --success: 86 58% 34%; /* #5f8a25 成功（白底图形 4.08:1） */
+    --warning: 35 69% 35%; /* #96641c 警示暖黄（白底 5.08:1） */
+    --info: 223 63% 54%; /* #3f6ad4 信息蓝（白底 4.97:1） */
+    --border: 0 0% 89%; /* #e2e2e2 Grey/400 列表描边 */
+    --input: 0 0% 89%;
+    --ring: 221 82% 77%; /* #93b2f7 输入框聚焦描边 */
+    /* Smartisan 扩展 token（组件类直接引用） */
+    --s-title-other: 0 0% 39%; /* #636363 标题/按钮文字 */
+    --s-icon: 0 0% 57%; /* #929292 图标灰 */
+    --s-chevron: 0 0% 70%; /* #b2b2b2 > 箭头 */
   }
 
   .dark {
-    --background: 220 35% 6%; /* #0B0F17 深空蓝黑 */
-    --foreground: 210 40% 96%; /* slate-100 */
-    --card: 222 47% 11%; /* slate-900 */
-    --card-foreground: 210 40% 96%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 217 91% 60%; /* blue-500（深色下提亮一档） */
+    /* Smartisan 无官方暗色：按"低对比渐变 + 细描边 + 内凹"同逻辑推导 */
+    --background: 0 0% 9%; /* #171717 暗灰页面底 */
+    --foreground: 0 0% 91%; /* #e8e8e8 */
+    --card: 0 0% 14%; /* #232323 卡片 */
+    --card-foreground: 0 0% 91%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 91%;
+    --primary: 221 79% 64%; /* #5b87eb 保持低饱和蓝 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 28% 17%; /* slate-800 */
-    --secondary-foreground: 210 40% 92%;
-    --muted: 217 28% 17%;
-    --muted-foreground: 215 20% 65%; /* slate-400 */
-    --accent: 217 30% 20%;
-    --accent-foreground: 210 40% 92%;
-    --destructive: 347 77% 58%;
+    --secondary: 0 0% 17%; /* #2b2b2b */
+    --secondary-foreground: 0 0% 91%;
+    --muted: 0 0% 19%;
+    --muted-foreground: 0 0% 62%; /* #9d9d9d */
+    --accent: 221 45% 20%; /* 深蓝灰底 */
+    --accent-foreground: 220 82% 74%; /* 提亮一档的蓝 */
+    --destructive: 4 68% 62%; /* #e5645a */
     --destructive-foreground: 0 0% 100%;
-    --success: 161 84% 40%;
-    --warning: 38 92% 52%;
-    --info: 199 89% 56%;
-    --border: 217 28% 17%;
-    --input: 217 28% 22%;
-    --ring: 217 91% 60%;
+    --success: 76 40% 54%;
+    --warning: 33 52% 60%;
+    --info: 220 82% 74%;
+    --border: 0 0% 23%; /* #3b3b3b 细描边 */
+    --input: 0 0% 23%;
+    --ring: 221 60% 55%;
+    --s-title-other: 0 0% 73%;
+    --s-icon: 0 0% 55%;
+    --s-chevron: 0 0% 42%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  /* smartisan.css 的 .s-page 只有浅色 token，暗色按推导板覆盖 */
+  .dark .s-page {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   html {
@@ -80,57 +95,25 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* 极淡顶部环境光晕：为冷灰底注入呼吸感（深浅色各自校准） */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: radial-gradient(
-        56% 38% at 14% -6%,
-        rgba(37, 99, 235, 0.05),
-        transparent 70%
-      ),
-      radial-gradient(
-        42% 30% at 88% -4%,
-        rgba(99, 102, 241, 0.04),
-        transparent 70%
-      );
-  }
-
-  .dark body::before {
-    background: radial-gradient(
-        56% 38% at 14% -6%,
-        rgba(59, 130, 246, 0.09),
-        transparent 70%
-      ),
-      radial-gradient(
-        42% 30% at 88% -4%,
-        rgba(129, 140, 248, 0.07),
-        transparent 70%
-      );
-  }
-
   ::selection {
-    background: rgba(37, 99, 235, 0.18);
+    background: rgba(91, 135, 235, 0.22);
   }
 
-  /* 细滚动条，跟随主题 */
+  /* 细滚动条，跟随主题（中性灰） */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+    scrollbar-color: rgba(146, 146, 146, 0.4) transparent;
   }
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(100, 116, 139, 0.3);
+    background: rgba(146, 146, 146, 0.35);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.5);
+    background: rgba(146, 146, 146, 0.55);
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -147,6 +130,43 @@
 }
 
 @layer utilities {
+  /* ── Smartisan 组件渐变（同色系 2–5% 明度差，暗色降低对比） ── */
+  /* 主按钮：上浅下深蓝（压暗至 AA：白字 ≥5.0） */
+  .s-grad-primary {
+    background-image: linear-gradient(180deg, #4469d0, #4165cc);
+  }
+  .dark .s-grad-primary {
+    background-image: linear-gradient(180deg, #4a72c9, #476ec6);
+  }
+  /* 白色凸起（旋钮 / 次级按钮） */
+  .s-grad-white {
+    background-image: linear-gradient(180deg, #ffffff, #fcfcfc);
+  }
+  .dark .s-grad-white {
+    background-image: linear-gradient(180deg, #3a3a3a, #333333);
+  }
+  /* 白色按下：渐变上下反转（像被按进去） */
+  .s-grad-white-press:active {
+    background-image: linear-gradient(180deg, #ebebeb, #f2f2f2);
+  }
+  .dark .s-grad-white-press:active {
+    background-image: linear-gradient(180deg, #2e2e2e, #3a3a3a);
+  }
+  /* 危险按钮红（压暗至 AA：白字 ≥4.7） */
+  .s-grad-danger {
+    background-image: linear-gradient(180deg, #d23c32, #ce382e);
+  }
+  .dark .s-grad-danger {
+    background-image: linear-gradient(180deg, #c2463c, #be4238);
+  }
+  /* 输入框内凹 */
+  .s-inset-field {
+    box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.04);
+  }
+  .dark .s-inset-field {
+    box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.22);
+  }
+
   /* 等宽数字：核心指标大数字必备，防止数值变化抖动 */
   .tabular {
     font-variant-numeric: tabular-nums;
@@ -160,43 +180,45 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  /* 品牌渐变（blue-600 → indigo-600） */
+  /* 品牌渐变：Smartisan 同款 2–5% 明度差纵向蓝渐变
+     （为 WCAG AA 正文 4.5:1 压暗：白字 5.03/5.31） */
   .bg-brand-gradient {
-    background-image: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    background-image: linear-gradient(180deg, #4469d0 0%, #4165cc 100%);
+  }
+  .dark .bg-brand-gradient {
+    background-image: linear-gradient(180deg, #4a72c9 0%, #476ec6 100%);
   }
   .text-gradient-brand {
-    background-image: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #3861c6;
+  }
+  .dark .text-gradient-brand {
+    color: #7fa3f0;
   }
 
-  /* 毛玻璃（导航栏底座；深色自动切换） */
+  /* 顶栏底座：Smartisan App Bar 是纯白实底 + 底部渐隐阴影，不用毛玻璃 */
   .glass {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    background: rgba(255, 255, 255, 0.96);
   }
   .dark .glass {
-    background: rgba(11, 15, 23, 0.72);
+    background: rgba(23, 23, 23, 0.96);
   }
 
   /* 骨架屏流光底纹（配 animate-shimmer 使用） */
   .skeleton-sheen {
     background: linear-gradient(
       100deg,
-      rgba(226, 232, 240, 0.7) 40%,
-      rgba(241, 245, 249, 0.9) 50%,
-      rgba(226, 232, 240, 0.7) 60%
+      rgba(226, 226, 226, 0.7) 40%,
+      rgba(242, 242, 242, 0.9) 50%,
+      rgba(226, 226, 226, 0.7) 60%
     );
     background-size: 200% 100%;
   }
   .dark .skeleton-sheen {
     background: linear-gradient(
       100deg,
-      rgba(30, 41, 59, 0.7) 40%,
-      rgba(51, 65, 85, 0.9) 50%,
-      rgba(30, 41, 59, 0.7) 60%
+      rgba(43, 43, 43, 0.7) 40%,
+      rgba(58, 58, 58, 0.9) 50%,
+      rgba(43, 43, 43, 0.7) 60%
     );
     background-size: 200% 100%;
   }

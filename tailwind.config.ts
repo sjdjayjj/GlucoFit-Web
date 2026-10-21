@@ -11,15 +11,17 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: [
+          "Smartisan Compact",
+          "Inter",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",
-          "Segoe UI",
-          "Roboto",
+          "BlinkMacSystemFont",
           "PingFang SC",
+          "Noto Sans CJK SC",
+          "Source Han Sans SC",
           "HarmonyOS Sans SC",
           "Microsoft YaHei",
-          "Noto Sans CJK SC",
           "sans-serif",
         ],
       },
@@ -63,21 +65,34 @@ const config: Config = {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        title: {
+          other: "hsl(var(--s-title-other))",
+        },
+        sicon: {
+          DEFAULT: "hsl(var(--s-icon))",
+          chevron: "hsl(var(--s-chevron))",
+        },
       },
       boxShadow: {
-        // Argon 高定：漫反射环境光阴影（多层、低不透明度、带一缕品牌蓝）
-        card:
-          "0 2px 10px -3px rgba(6,81,237,0.04), 0 10px 25px -5px rgba(15,23,42,0.03)",
-        "card-hover":
-          "0 4px 14px -3px rgba(6,81,237,0.10), 0 18px 36px -8px rgba(15,23,42,0.10)",
-        sm: "0 1px 2px rgba(15,23,42,0.05)",
-        DEFAULT:
-          "0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04)",
-        md: "0 4px 12px -2px rgba(15,23,42,0.08), 0 2px 6px -1px rgba(15,23,42,0.04)",
-        lg: "0 12px 28px -6px rgba(15,23,42,0.12), 0 4px 10px -4px rgba(15,23,42,0.05)",
-        xl: "0 20px 44px -10px rgba(15,23,42,0.16), 0 8px 16px -8px rgba(15,23,42,0.06)",
-        "2xl":
-          "0 28px 60px -12px rgba(15,23,42,0.22), 0 12px 24px -12px rgba(15,23,42,0.08)",
+        // Smartisan：投影透明度基本 ≤ 0.1，极淡大范围
+        card: "0 10px 16px rgba(0,0,0,0.04)",
+        "card-hover": "0 12px 20px rgba(0,0,0,0.08)",
+        sm: "0 1px 2px rgba(0,0,0,0.05)",
+        DEFAULT: "0 1px 2px rgba(0,0,0,0.05)",
+        md: "0 2px 6px rgba(0,0,0,0.06)",
+        lg: "0 6px 12px rgba(0,0,0,0.07)",
+        xl: "0 8px 16px rgba(0,0,0,0.08)",
+        "2xl": "0 10px 16px rgba(0,0,0,0.10)",
+        // Smartisan 组件投影
+        "s-btn": "0 4px 2px rgba(0,0,0,0.10)",
+        "s-knob": "0 5px 16.6px rgba(0,0,0,0.21)",
+        "s-thumb": "0 4px 4px rgba(0,0,0,0.08)",
+        "s-bar": "0 4px 4px rgba(0,0,0,0.08)",
+        // 内凹（开关轨道 / 输入框 / Tab 选中 / 滑块轨道）
+        "inset-track": "inset 0 4px 4px rgba(0,0,0,0.06)",
+        "inset-switch": "inset 0 4px 12px rgba(0,0,0,0.10)",
+        "inset-field": "inset 0 4px 4px rgba(0,0,0,0.04)",
+        "inset-tab": "inset 0 4px 10px rgba(0,0,0,0.06)",
       },
       keyframes: {
         "fade-up": {

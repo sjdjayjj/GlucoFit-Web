@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import {
@@ -24,9 +24,9 @@ import { cn, shortTime } from "@/lib/utils";
 
 /** 稳糖分徽章配色：语义化原子类，双主题可读 */
 const SCORE_BADGE_CLASS: Record<ScoreTone, string> = {
-  good: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400",
-  warn: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-400",
-  bad: "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-400",
+  good: "border-[#d5e5bb] bg-[#eef5e2] text-[#54761e] dark:border-[#3a4a26] dark:bg-[#2a3320] dark:text-[#9cc35c]",
+  warn: "border-[#f0dfb4] bg-[#fff5d9] text-[#96641c] dark:border-[#4d4229] dark:bg-[#362e1c] dark:text-[#dba75f]",
+  bad: "border-[#f3c7c4] bg-[#ffe7e5] text-[#c23430] dark:border-[#4a2c29] dark:bg-[#3a2422] dark:text-[#e5645a]",
 };
 
 const MEAL_TYPE_ICON: Record<MealType, React.ComponentType<{ className?: string }>> = {
@@ -37,9 +37,9 @@ const MEAL_TYPE_ICON: Record<MealType, React.ComponentType<{ className?: string 
 };
 
 const ENERGY_REACTION_CLASS: Record<EnergyReaction, string> = {
-  energetic: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400",
-  normal: "border-slate-200/80 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-400",
-  food_coma: "border-rose-500/20 bg-rose-500/10 text-rose-600 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-400",
+  energetic: "border-[#d5e5bb] bg-[#eef5e2] text-[#54761e] dark:border-[#3a4a26] dark:bg-[#2a3320] dark:text-[#9cc35c]",
+  normal: "border-border bg-secondary text-muted-foreground",
+  food_coma: "border-[#f3c7c4] bg-[#ffe7e5] text-[#c23430] dark:border-[#4a2c29] dark:bg-[#3a2422] dark:text-[#e5645a]",
 };
 
 function BehaviorBadge({ ok, okText, badText }: { ok: boolean; okText: string; badText: string }) {
@@ -48,8 +48,8 @@ function BehaviorBadge({ ok, okText, badText }: { ok: boolean; okText: string; b
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
         ok
-          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-400"
-          : "border-slate-200/80 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-400"
+          ? "border-[#d5e5bb] bg-[#eef5e2] text-[#54761e] dark:border-[#3a4a26] dark:bg-[#2a3320] dark:text-[#9cc35c]"
+          : "border-border bg-secondary text-muted-foreground"
       )}
     >
       {ok ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
@@ -81,7 +81,7 @@ export function MealLogCard({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 transition-all duration-200 ease-out hover:border-slate-300/90 dark:border-white/[0.06] dark:bg-slate-800/40 dark:hover:border-white/[0.12]">
+    <div className="rounded-[8px] border border-border bg-secondary/60 p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           {log.imageUrl ? (
@@ -92,15 +92,15 @@ export function MealLogCard({
               className="h-8 w-8 rounded-lg object-cover"
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#eef5e2] text-[#54761e] dark:bg-[#2a3320] dark:text-[#9cc35c]">
               <MealIcon className="h-4 w-4" />
             </div>
           )}
           <div>
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="text-sm font-semibold text-foreground">
               {MEAL_TYPE_LABEL[log.mealType]}
             </div>
-            <div className="text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] tabular-nums text-muted-foreground">
               {shortTime(log.timestamp)}
             </div>
           </div>
@@ -114,7 +114,7 @@ export function MealLogCard({
                   onClick={() => onEdit(log)}
                   title="编辑"
                   aria-label="编辑该餐记录"
-                  className="flex h-10 w-10 items-center justify-center rounded-md text-slate-400 transition-all duration-200 ease-out hover:bg-slate-500/10 hover:text-slate-900 dark:hover:text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground active:bg-muted"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -124,7 +124,7 @@ export function MealLogCard({
                   <button
                     type="button"
                     onClick={handleDeleteClick}
-                    className="flex h-10 items-center rounded-md border border-rose-500/20 bg-rose-500/10 px-3 text-xs font-medium text-rose-600 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-400"
+                    className="flex h-10 items-center rounded-md border border-[#f3c7c4] bg-[#ffe7e5] px-3 text-xs font-medium text-[#c23430] dark:border-[#4a2c29] dark:bg-[#3a2422] dark:text-[#e5645a]"
                   >
                     确认删除
                   </button>
@@ -134,7 +134,7 @@ export function MealLogCard({
                     onClick={handleDeleteClick}
                     title="删除"
                     aria-label="删除该餐记录"
-                    className="flex h-10 w-10 items-center justify-center rounded-md text-slate-400 transition-all duration-200 ease-out hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400"
+                    className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground active:bg-[#ffe7e5] active:text-[#c23430] dark:active:bg-[#3a2422] dark:active:text-[#e5645a]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -178,15 +178,15 @@ export function MealLogCard({
           {ENERGY_REACTION_LABEL[log.energyReaction]}
         </span>
         {log.satietyDuration && (
-          <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-2 py-0.5 text-[11px] font-medium text-sky-600 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-400">
+          <span className="inline-flex items-center rounded-full border border-[#c9d8f7] bg-accent px-2 py-0.5 text-[11px] font-medium text-[#3861c6] dark:border-[#3d5480] dark:text-[#7fa3f0]">
             抗饿 {SATIETY_DURATION_LABEL[log.satietyDuration]}
           </span>
         )}
       </div>
 
       {log.nutrition && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-          <span className="font-semibold text-slate-900 dark:text-white">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] tabular-nums text-muted-foreground">
+          <span className="font-semibold text-foreground">
             {Math.round(log.nutrition.calories)} kcal
           </span>
           <span>碳水 {Math.round(log.nutrition.carbsG)}g</span>
@@ -196,7 +196,7 @@ export function MealLogCard({
       )}
 
       {log.foodSummary && (
-        <p className="mt-2 text-xs leading-relaxed break-words text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-xs leading-relaxed break-words text-muted-foreground">
           {log.foodSummary}
         </p>
       )}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { ArrowUp, Dumbbell, Scale, UtensilsCrossed, Zap } from "lucide-react";
@@ -36,7 +36,7 @@ export function FloatingActionCapsule({
   return (
     <div
       className={cn(
-        "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 flex items-center gap-1 rounded-full border border-slate-200/70 bg-white/85 p-1.5 shadow-[0_10px_30px_-8px_rgba(15,23,42,0.25)] backdrop-blur-xl sm:right-6 sm:bottom-6 dark:border-white/[0.08] dark:bg-slate-900/85 dark:shadow-[0_10px_30px_-8px_rgba(0,0,0,0.6)]"
+        "fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-50 flex items-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-md sm:right-6 sm:bottom-6"
       )}
     >
       {/* 嘴馋急救 SOS：深夜/下午突发暴食冲动的多巴胺阻断入口 */}
@@ -45,7 +45,7 @@ export function FloatingActionCapsule({
         onClick={onOpenSos}
         title="嘴馋急救 SOS"
         aria-label="嘴馋急救 SOS"
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-b from-amber-400 to-orange-400 text-amber-950 shadow-sm shadow-amber-500/25 transition-all duration-200 ease-out hover:scale-105 hover:from-amber-300 hover:to-orange-300 active:scale-95"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#96641c] text-white active:bg-[#7d5412] dark:bg-[#96641c] dark:active:bg-[#7d5412]"
       >
         <Zap className="h-4 w-4 fill-current" />
       </button>
@@ -65,7 +65,7 @@ export function FloatingActionCapsule({
         type="button"
         onClick={onOpenBody}
         title="录入体脂秤数据"
-        className="flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-b from-blue-600 to-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-blue-600/30 transition-all duration-200 ease-out hover:scale-[1.03] hover:from-blue-500 hover:to-indigo-500 hover:shadow-card-hover active:scale-95"
+        className="flex h-10 items-center gap-1.5 rounded-full s-grad-primary px-4 text-xs font-semibold text-white border-[0.8px] border-[#3a5fc9] active:bg-[#3a60c5] active:border-[#3157bd]"
       >
         <Scale className="h-4 w-4" />
         <span>录体脂</span>
@@ -78,7 +78,7 @@ export function FloatingActionCapsule({
           onClick={scrollToTop}
           title="回到顶部"
           aria-label="回到顶部"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition-all duration-200 ease-out hover:bg-slate-500/10 hover:text-slate-900 active:scale-95 dark:text-slate-400 dark:hover:text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
         >
           <ArrowUp className="h-3.5 w-3.5" />
         </button>
@@ -102,7 +102,7 @@ function CapsuleButton({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="flex h-10 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-slate-700 transition-all duration-200 ease-out hover:bg-slate-500/10 hover:text-slate-900 active:scale-95 dark:text-slate-300 dark:hover:text-white"
+      className="flex h-10 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium text-foreground active:bg-muted"
     >
       {icon}
       <span className="hidden sm:inline">{label}</span>

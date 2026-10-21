@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -105,9 +105,9 @@ export function BodyCompositionDialog({
     <div key={field.key} className="space-y-1.5">
       <Label htmlFor={`body-${field.key}`}>
         {field.label}
-        {field.required && <span className="text-rose-600 dark:text-rose-400"> *</span>}
+        {field.required && <span className="text-[#c23430] dark:text-[#e5645a]"> *</span>}
         {field.unit && (
-          <span className="ml-1 text-xs font-normal text-slate-400 dark:text-slate-500">({field.unit})</span>
+          <span className="ml-1 text-xs font-normal text-muted-foreground">({field.unit})</span>
         )}
       </Label>
       <Input
@@ -166,14 +166,14 @@ export function BodyCompositionDialog({
           </div>
 
           <div>
-            <div className="mb-2 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted-foreground">
               核心指标（必填）
             </div>
             <div className="grid grid-cols-2 gap-3">{REQUIRED_FIELDS.map(renderField)}</div>
           </div>
 
           <div>
-            <div className="mb-2 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted-foreground">
               体成分细分（选填）
             </div>
             <div className="grid grid-cols-2 gap-3">{OPTIONAL_FIELDS.map(renderField)}</div>
@@ -189,7 +189,7 @@ export function BodyCompositionDialog({
             />
           </div>
 
-          {error && <p className="break-words text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+          {error && <p className="break-words text-sm text-[#c23430] dark:text-[#e5645a]">{error}</p>}
         </div>
 
         <DialogFooter>

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
+import "./smartisan.css";
 
 export const metadata: Metadata = {
   title: "GlucoFit 代谢自动驾驶 · Metabolic Autopilot v3.0",
@@ -13,8 +15,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F8FAFC" },
-    { media: "(prefers-color-scheme: dark)", color: "#0B0F17" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#171717" },
   ],
 };
 
@@ -29,7 +31,8 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-dvh font-sans">{children}</body>
+      <body className="s-page min-h-dvh font-sans">{children}</body>
+      <Script src="/smartisan.js" strategy="afterInteractive" />
     </html>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarRange, Timer, Utensils, Waves } from "lucide-react";
@@ -75,7 +75,7 @@ export function FastingTracker() {
   }, [now, startHour, windowHours]);
 
   const progress = Math.min(1, Math.max(0, phase.progress));
-  const strokeColor = phase.eating ? "stroke-emerald-500" : "stroke-sky-500";
+  const strokeColor = phase.eating ? "stroke-[#79ad31]" : "stroke-[#5b87eb]";
 
   return (
     <Card className="flex flex-col">
@@ -83,7 +83,7 @@ export function FastingTracker() {
         <div className="flex items-start gap-3">
           <div
             aria-hidden
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400"
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground"
           >
             <Timer className="h-4 w-4" />
           </div>
@@ -96,8 +96,8 @@ export function FastingTracker() {
                   className={cn(
                     "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
                     isWeekendMode
-                      ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-400"
-                      : "border-blue-500/20 bg-blue-500/10 text-blue-600 dark:border-blue-400/20 dark:bg-blue-400/10 dark:text-blue-400"
+                      ? "border-[#96641c]/30 bg-[#fff5d9] text-[#96641c] dark:border-[#96641c]/30 dark:bg-[#362e1c] dark:text-[#dba75f]"
+                      : "border-[#5b87eb]/30 bg-accent text-[#3861c6] dark:border-[#5b87eb]/30 dark:bg-[#2a3552] dark:text-[#7fa3f0]"
                   )}
                 >
                   <CalendarRange className="h-3 w-3" />
@@ -118,7 +118,7 @@ export function FastingTracker() {
               cy="75"
               r={RING_RADIUS}
               fill="none"
-              className="stroke-slate-200/80 dark:stroke-white/10"
+              className="stroke-[#e2e2e2] dark:stroke-[#3b3b3b]"
               strokeWidth={10}
             />
             <circle
@@ -136,58 +136,58 @@ export function FastingTracker() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {phase.eating ? (
-              <Utensils className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <Utensils className="h-5 w-5 text-[#54761e] dark:text-[#9cc35c]" />
             ) : (
-              <Waves className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+              <Waves className="h-5 w-5 text-[#3861c6] dark:text-[#7fa3f0]" />
             )}
             <div
               className={cn(
                 "mt-1 text-[11px] font-semibold tracking-wider",
-                phase.eating ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600 dark:text-sky-400"
+                phase.eating ? "text-[#54761e] dark:text-[#9cc35c]" : "text-[#3861c6] dark:text-[#7fa3f0]"
               )}
             >
               {phase.eating ? "进食窗口" : "低胰岛素消脂维护期"}
             </div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500">
+            <div className="text-[10px] text-muted-foreground">
               {phase.eating ? "距窗口关闭" : "距开窗进食"}
             </div>
-            <div className="text-sm font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
+            <div className="text-sm font-semibold tabular-nums tracking-tight text-foreground">
               {fmtCountdown(phase.remaining)}
             </div>
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-center text-xs text-muted-foreground">
           今日进食窗口{" "}
-          <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{phase.windowLabel}</span>
+          <span className="font-semibold tabular-nums text-foreground">{phase.windowLabel}</span>
           ，断食 {24 - windowHours} 小时有助胰岛素基线回落
         </p>
 
         {/* 模式与窗口时间设置 */}
         <div className="w-full space-y-2">
           {weeklySchedule?.enabled ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-3 text-center text-xs text-slate-500 dark:border-white/10 dark:bg-slate-800/40 dark:text-slate-400">
+            <div className="rounded-[10px] border border-dashed border-border bg-secondary p-3 text-center text-xs text-muted-foreground">
               双模引擎已开启：工作日{" "}
-              <span className="font-semibold text-slate-900 dark:text-white">{weeklySchedule.weekdayProtocol}</span>
+              <span className="font-semibold text-foreground">{weeklySchedule.weekdayProtocol}</span>
               {" · "}周末{" "}
-              <span className="font-semibold text-slate-900 dark:text-white">
+              <span className="font-semibold text-foreground">
                 {weeklySchedule.weekendProtocol === "flexible" ? "弹性" : weeklySchedule.weekendProtocol}
               </span>
               ，当前自动切换为{" "}
-              <span className="font-semibold text-blue-600 dark:text-blue-400">{PROTOCOL_LABEL[protocol]}</span>
+              <span className="font-semibold text-[#3861c6] dark:text-[#7fa3f0]">{PROTOCOL_LABEL[protocol]}</span>
             </div>
           ) : (
-            <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-slate-800/60">
+            <div className="flex gap-1 rounded-[10px] border border-border bg-muted p-1 dark:border-border dark:bg-secondary">
               {PROTOCOL_OPTIONS.map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => updateGoal({ fastingProtocol: p })}
                   className={cn(
-                    "min-h-10 flex-1 rounded-lg px-1 py-1.5 text-xs font-medium tabular-nums transition-all duration-200 ease-out",
+                    "min-h-10 flex-1 rounded-lg px-1 py-1.5 text-xs font-medium tabular-nums",
                     goal.fastingProtocol === p
-                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      ? "bg-card text-foreground shadow-sm dark:bg-secondary dark:text-white"
+                      : "text-muted-foreground active:bg-[#f8f8f8] dark:active:bg-[#2a2a2a]"
                   )}
                 >
                   {p}
@@ -195,17 +195,17 @@ export function FastingTracker() {
               ))}
             </div>
           )}
-          <div className="flex gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-slate-800/60">
+          <div className="flex gap-1 rounded-[10px] border border-border bg-muted p-1 dark:border-border dark:bg-secondary">
             {START_HOUR_OPTIONS.map((h) => (
               <button
                 key={h}
                 type="button"
                 onClick={() => setStartHour(h)}
                 className={cn(
-                  "flex-1 rounded-lg px-1 py-1.5 text-xs font-medium tabular-nums transition-all duration-200 ease-out",
+                  "flex-1 rounded-lg px-1 py-1.5 text-xs font-medium tabular-nums",
                   startHour === h
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    ? "bg-card text-foreground shadow-sm dark:bg-secondary dark:text-white"
+                    : "text-muted-foreground active:bg-[#f8f8f8] dark:active:bg-[#2a2a2a]"
                 )}
               >
                 {fmtClock(h)}

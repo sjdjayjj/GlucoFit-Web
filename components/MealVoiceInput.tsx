@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, Sparkles, Square } from "lucide-react";
@@ -180,7 +180,7 @@ export function MealVoiceInput({
           className={cn(
             "h-10 shrink-0",
             listening &&
-              "border-rose-500/40 bg-rose-500/10 text-rose-600 hover:bg-rose-500/15 dark:border-rose-400/40 dark:bg-rose-400/10 dark:text-rose-400"
+              "border-[#cf382e]/40 bg-[#ffe7e5] text-[#c23430] dark:border-[#cf382e]/40 dark:bg-[#3a2422] dark:text-[#e5645a]"
           )}
         >
           {parsing ? (
@@ -194,8 +194,8 @@ export function MealVoiceInput({
         </Button>
         <span
           className={cn(
-            "min-w-0 break-words text-[11px] text-slate-400 dark:text-slate-500",
-            listening && "animate-pulse text-rose-600 dark:text-rose-400"
+            "min-w-0 break-words text-[11px] text-muted-foreground",
+            listening && "animate-pulse text-[#c23430] dark:text-[#e5645a]"
           )}
         >
           {listening
@@ -205,13 +205,13 @@ export function MealVoiceInput({
       </div>
 
       {transcript && (
-        <div className="flex items-start gap-1.5 rounded-xl border border-sky-500/20 bg-sky-500/10 p-2 text-xs text-slate-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-slate-300">
-          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
+        <div className="flex items-start gap-1.5 rounded-[10px] border border-[#5b87eb]/30 bg-accent p-2 text-xs text-foreground dark:border-[#5b87eb]/30 dark:bg-[#2a3552]">
+          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#3861c6] dark:text-[#7fa3f0]" />
           <span className="min-w-0 break-words leading-snug">{transcript}</span>
         </div>
       )}
 
-      {error && <p className="break-words text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+      {error && <p className="break-words text-xs text-[#c23430] dark:text-[#e5645a]">{error}</p>}
     </div>
   );
 }

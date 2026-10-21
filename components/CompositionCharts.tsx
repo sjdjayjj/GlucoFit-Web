@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import {
@@ -28,10 +28,10 @@ const RANGE_OPTIONS: Array<{ value: RangeDays; label: string }> = [
 
 /** VERDICT_STYLE 为 lib 层浅色配色，dark 下叠加语义色修正 */
 const VERDICT_DARK_CLASS: Record<BodyCompAnalysis["verdict"], string> = {
-  fat_loss: "dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
-  water_retention: "dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400",
-  glycogen_refill: "dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
-  fat_gain: "dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
+  fat_loss: "dark:border-[#79ad31]/30 dark:bg-[#2a3320] dark:text-[#9cc35c]",
+  water_retention: "dark:border-[#5b87eb]/30 dark:bg-[#2a3552] dark:text-[#7fa3f0]",
+  glycogen_refill: "dark:border-[#96641c]/30 dark:bg-[#362e1c] dark:text-[#dba75f]",
+  fat_gain: "dark:border-[#cf382e]/30 dark:bg-[#3a2422] dark:text-[#e5645a]",
 };
 
 export function CompositionCharts() {
@@ -60,7 +60,7 @@ export function CompositionCharts() {
         <div className="flex items-start gap-3">
           <div
             aria-hidden
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400"
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground"
           >
             <LineChart className="h-4 w-4" />
           </div>
@@ -69,17 +69,17 @@ export function CompositionCharts() {
             <CardDescription>关注脂肪量下降与蛋白质量维持，判断减重是否掉肌</CardDescription>
           </div>
         </div>
-        <div className="flex w-full gap-1 rounded-xl border border-slate-200/70 bg-slate-100/80 p-1 sm:w-auto dark:border-white/10 dark:bg-slate-800/60">
+        <div className="flex w-full gap-1 rounded-[10px] border border-border bg-muted p-1 sm:w-auto dark:border-border dark:bg-secondary">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => setRange(opt.value)}
               className={cn(
-                "min-h-10 flex-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium transition-all duration-200 ease-out sm:flex-none sm:px-2.5",
+                "min-h-10 flex-1 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium sm:flex-none sm:px-2.5",
                 range === opt.value
-                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  ? "bg-card text-foreground shadow-sm dark:bg-secondary dark:text-white"
+                  : "text-muted-foreground active:bg-[#f8f8f8] dark:active:bg-[#2a2a2a]"
               )}
             >
               {opt.label}
@@ -90,7 +90,7 @@ export function CompositionCharts() {
 
       <CardContent className="space-y-6">
         {data.length === 0 ? (
-          <div className="flex h-48 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+          <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
             该周期内暂无体成分记录
           </div>
         ) : (
@@ -129,17 +129,17 @@ export function CompositionCharts() {
 
             {/* 图表 1：体重 + 体脂率 双轴 */}
             <div>
-              <div className="mb-2 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted-foreground">
                 体重 (kg) 与 体脂率 (%) 走势
               </div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eeeeee" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9d9d9d" }} tickLine={false} axisLine={false} />
                   <YAxis
                     yAxisId="weight"
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    tick={{ fontSize: 11, fill: "#9d9d9d" }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -147,7 +147,7 @@ export function CompositionCharts() {
                     yAxisId="fatRate"
                     orientation="right"
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    tick={{ fontSize: 11, fill: "#9d9d9d" }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -173,18 +173,18 @@ export function CompositionCharts() {
                     type="monotone"
                     dataKey="weight"
                     name="weight"
-                    stroke="#3b82f6"
+                    stroke="#5b87eb"
                     strokeWidth={2}
-                    dot={{ r: 2.5, fill: "#3b82f6" }}
+                    dot={{ r: 2.5, fill: "#5b87eb" }}
                   />
                   <Line
                     yAxisId="fatRate"
                     type="monotone"
                     dataKey="bodyFatRate"
                     name="bodyFatRate"
-                    stroke="#10b981"
+                    stroke="#79ad31"
                     strokeWidth={2}
-                    dot={{ r: 2.5, fill: "#10b981" }}
+                    dot={{ r: 2.5, fill: "#79ad31" }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -192,16 +192,16 @@ export function CompositionCharts() {
 
             {/* 图表 2：脂肪量 vs 蛋白质量 */}
             <div>
-              <div className="mb-2 text-[11px] font-semibold tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted-foreground">
                 脂肪量 vs 蛋白质量 (kg) — 减重是否掉肌
               </div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.25} vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eeeeee" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9d9d9d" }} tickLine={false} axisLine={false} />
                   <YAxis
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    tick={{ fontSize: 11, fill: "#9d9d9d" }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -226,18 +226,18 @@ export function CompositionCharts() {
                     type="monotone"
                     dataKey="fatMass"
                     name="fatMass"
-                    stroke="#10b981"
+                    stroke="#79ad31"
                     strokeWidth={2}
-                    fill="#10b981"
+                    fill="#79ad31"
                     fillOpacity={0.15}
                   />
                   <Line
                     type="monotone"
                     dataKey="protein"
                     name="protein"
-                    stroke="#0ea5e9"
+                    stroke="#93b2f7"
                     strokeWidth={2}
-                    dot={{ r: 2.5, fill: "#0ea5e9" }}
+                    dot={{ r: 2.5, fill: "#93b2f7" }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
