@@ -244,6 +244,24 @@
   animation: breathe 10s ease-in-out infinite;
 }
 
+/* ── 触控目标命中区（M2）──
+   仅在触屏设备生效：用伪元素把命中区扩到 ≥44×44，视觉尺寸完全不变。
+   ::after 依赖元素自身已是定位上下文（Button size=sm/icon 与 Switch 均带 relative），
+   因此这里不声明 position，避免覆盖 JSX 里已有的 absolute/relative 造成布局错位。 */
+@media (pointer: coarse) {
+  .hit-target::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
 /* 尊重系统「减弱动态效果」偏好 */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Droplets } from "lucide-react";
 import { useSortedBodyRecords } from "@/lib/storage";
+import { useChartTheme, useIsNarrow } from "@/lib/chart-theme";
 import { analyzeHydration, VERDICT_STYLE } from "@/lib/bodyCompAnalyzer";
 import type { BodyCompAnalysis } from "@/types/v3";
 import { cn, daysAgoDateStr, shortDate } from "@/lib/utils";
@@ -36,6 +37,8 @@ const VERDICT_DARK_CLASS: Record<BodyCompAnalysis["verdict"], string> = {
 
 export function CompositionCharts() {
   const records = useSortedBodyRecords();
+  const chartTheme = useChartTheme();
+  const narrow = useIsNarrow();
   const [range, setRange] = useState<RangeDays>(7);
 
   // v3.0 水合解耦：剥离水分噪音，解读最近一次体重波动
@@ -133,13 +136,24 @@ export function CompositionCharts() {
                 体重 (kg) 与 体脂率 (%) 走势
               </div>
               <ResponsiveContainer width="100%" height={240}>
-                <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eeeeee" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9d9d9d" }} tickLine={false} axisLine={false} />
+                <ComposedChart
+                  data={data}
+                  margin={{ top: 8, right: narrow ? 0 : 8, bottom: 0, left: narrow ? -6 : -16 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: narrow ? 10 : 11, fill: chartTheme.axis }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={range === 30 ? (narrow ? 40 : 24) : 16}
+                  />
                   <YAxis
                     yAxisId="weight"
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11, fill: "#9d9d9d" }}
+                    width={narrow ? 34 : 60}
+                    tick={{ fontSize: narrow ? 10 : 11, fill: chartTheme.axis }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -147,7 +161,9 @@ export function CompositionCharts() {
                     yAxisId="fatRate"
                     orientation="right"
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11, fill: "#9d9d9d" }}
+                    width={narrow ? 28 : 60}
+                    tick={{ fontSize: narrow ? 10 : 11, fill: chartTheme.axis }}
+                    tickFormatter={(value: number) => (narrow ? String(Math.round(value)) : String(value))}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -166,7 +182,7 @@ export function CompositionCharts() {
                   />
                   <Legend
                     formatter={(value: string) => (value === "weight" ? "体重 (kg)" : "体脂率 (%)")}
-                    wrapperStyle={{ fontSize: 12 }}
+                    wrapperStyle={{ fontSize: 12, color: chartTheme.legend }}
                   />
                   <Line
                     yAxisId="weight"
@@ -196,12 +212,23 @@ export function CompositionCharts() {
                 脂肪量 vs 蛋白质量 (kg) — 减重是否掉肌
               </div>
               <ResponsiveContainer width="100%" height={240}>
-                <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eeeeee" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9d9d9d" }} tickLine={false} axisLine={false} />
+                <ComposedChart
+                  data={data}
+                  margin={{ top: 8, right: narrow ? 0 : 8, bottom: 0, left: narrow ? -6 : -16 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: narrow ? 10 : 11, fill: chartTheme.axis }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={range === 30 ? (narrow ? 40 : 24) : 16}
+                  />
                   <YAxis
                     domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                    tick={{ fontSize: 11, fill: "#9d9d9d" }}
+                    width={narrow ? 34 : 60}
+                    tick={{ fontSize: narrow ? 10 : 11, fill: chartTheme.axis }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -220,7 +247,7 @@ export function CompositionCharts() {
                   />
                   <Legend
                     formatter={(value: string) => (value === "fatMass" ? "脂肪量 (kg)" : "蛋白质量 (kg)")}
-                    wrapperStyle={{ fontSize: 12 }}
+                    wrapperStyle={{ fontSize: 12, color: chartTheme.legend }}
                   />
                   <Area
                     type="monotone"

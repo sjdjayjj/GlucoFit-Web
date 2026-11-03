@@ -42,7 +42,7 @@ interface MealResponseParams {
  * - 餐后运动：GLUT4 非胰岛素依赖摄糖，削峰 ~32%
  */
 function mealResponseParams(meal: MealLog): MealResponseParams {
-  const t0 = isoToMinutes(meal.timestamp);
+  const t0 = isoToDayMinutes(meal.timestamp);
 
   // 碳水负荷：优先用 AI 估算碳水克数，否则按餐次经验值
   const carbsG =
@@ -78,9 +78,17 @@ function bump(minutes: number, center: number, amplitude: number, sigma: number)
   return amplitude * Math.exp(-(d * d) / (2 * sigma * sigma));
 }
 
-function isoToMinutes(iso: string): number {
+/**
+ * 换算为「相对今日 00:00」的分钟数：昨日餐食为负值（跨午夜时间轴）。
+ * 只按钟点取分钟会把昨晚 21:00 的画成今天 21:00、把 23:30 的峰值推到 1440 之外。
+ * 基准必须是「今天」的 00:00，而不是餐食所在那天的 00:00。
+ */
+function isoToDayMinutes(iso: string): number {
   const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
+  if (Number.isNaN(d.getTime())) return 0;
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - midnight.getTime()) / 60_000);
 }
 
 function fmtMinutes(minutes: number): string {
@@ -97,8 +105,9 @@ function classify(glucose: number): GlucoseLevel {
 
 /**
  * 推演全天双波浪潮汐曲线（15 分钟分辨率，49 个节点）。
+ * 昨日 21:00 之后的餐食坐标可为负（如 23:30 → -30），峰值自然落在 0 点后。
  * @param mealLogs 当日（或近 24h）餐食记录
- * @param nowMinutes 当前时刻（分钟），此后节点标记为预测
+ * @param nowMinutes 当前时刻（相对今日 00:00 的分钟），此后节点标记为预测
  */
 export function simulateMetabolicCurve(
   mealLogs: MealLog[],
@@ -143,9 +152,9 @@ export function findActiveSpikeMeal(
   let target: MealLog | null = null;
   let targetPeak = 0;
   for (const meal of mealLogs) {
-    const t0 = isoToMinutes(meal.timestamp);
+    const t0 = isoToDayMinutes(meal.timestamp);
     const age = nowMinutes - t0;
-    if (age < -15 || age > 210) continue; // 只针对近 3.5h 内的餐
+    if (age < -15 || age > 210) continue; // 只针对近 3.5h 内的餐（昨日 23:30 的餐 age 为正）
     if (meal.postMealActivity) continue; // 已完成削峰
     const params = mealResponseParams(meal);
     // 当前处于冲高窗口（峰值前后 1.5σ）且幅度足够

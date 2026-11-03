@@ -489,9 +489,23 @@ export const useAISettingsStore = create<AISettingsState>()(
   )
 );
 
-/** 按日期升序的体成分记录 */
+/**
+ * 按日期升序的体成分记录（返回稳定引用）。
+ * 之前每次调用都在 selector 里 `[...records].sort()`，数组引用每次都变，
+ * 导致订阅组件全量重渲染、下游 useMemo 全部失效。改为按源数组引用缓存排序结果。
+ */
+let sortedBodyCache: {
+  source: BodyCompositionRecord[];
+  sorted: BodyCompositionRecord[];
+} | null = null;
+
+function sortBodyRecords(records: BodyCompositionRecord[]): BodyCompositionRecord[] {
+  if (sortedBodyCache?.source === records) return sortedBodyCache.sorted;
+  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+  sortedBodyCache = { source: records, sorted };
+  return sorted;
+}
+
 export function useSortedBodyRecords(): BodyCompositionRecord[] {
-  return useGlucoFitStore((s) =>
-    [...s.bodyRecords].sort((a, b) => a.date.localeCompare(b.date))
-  );
+  return sortBodyRecords(useGlucoFitStore((s) => s.bodyRecords));
 }

@@ -45,6 +45,11 @@ const OPTIONAL_FIELDS: NumericField[] = [
   { key: "bodyScore", label: "身体得分", unit: "分", step: "1" },
 ];
 
+/** OCR 字段 key → 中文名（用于「识别失败请手填」提示） */
+const FIELD_LABEL: Record<string, string> = Object.fromEntries(
+  [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS].map((f) => [f.key, f.label])
+);
+
 export function BodyCompositionDialog({
   open,
   onOpenChange,
@@ -58,6 +63,8 @@ export function BodyCompositionDialog({
   const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  /** OCR 部分字段识别失败/越界时的可见提示 */
+  const [ocrWarning, setOcrWarning] = useState<string | null>(null);
   /** 本条记录的 id：原图以该 id 存入 IndexedDB，store 只留缩略图 */
   const recordIdRef = useRef<string>(uid());
 
@@ -69,6 +76,7 @@ export function BodyCompositionDialog({
       setNotes("");
       setImageUrl(undefined);
       setError(null);
+      setOcrWarning(null);
     }
   }, [open]);
 
@@ -142,12 +150,12 @@ export function BodyCompositionDialog({
           {/* AI 截图识别 */}
           <BodyImageUploader
             onRecognized={(result, img) => {
-              const next: Record<string, string> = {
-                weightKg: String(result.weightKg),
-                bmi: String(result.bmi),
-                bodyFatRate: String(result.bodyFatRate),
-                fatMassKg: String(result.fatMassKg),
-              };
+              // 只预填识别成功的字段；越界/解析失败留空，由用户手填
+              const next: Record<string, string> = {};
+              if (result.weightKg != null) next.weightKg = String(result.weightKg);
+              if (result.bmi != null) next.bmi = String(result.bmi);
+              if (result.bodyFatRate != null) next.bodyFatRate = String(result.bodyFatRate);
+              if (result.fatMassKg != null) next.fatMassKg = String(result.fatMassKg);
               if (result.bodyScore != null) next.bodyScore = String(result.bodyScore);
               if (result.waterWeightKg != null) next.waterWeightKg = String(result.waterWeightKg);
               if (result.boneMassKg != null) next.boneMassKg = String(result.boneMassKg);
@@ -155,6 +163,13 @@ export function BodyCompositionDialog({
                 next.proteinWeightKg = String(result.proteinWeightKg);
               setValues(next);
               setError(null);
+              setOcrWarning(
+                result.invalidFields.length
+                  ? `以下字段未能识别或超出合理范围（体重 20–300kg、体脂率 3–70%、骨盐量 0.5–6kg 等），已留空请手动填写：${result.invalidFields
+                      .map((key) => FIELD_LABEL[key] ?? key)
+                      .join("、")}`
+                  : null
+              );
               // 原图转存 IndexedDB（store 只保留缩略图）；IDB 不可用时降级为原始 Base64
               void (async () => {
                 const thumb = await downscaleDataUrl(img, 160, 0.6).catch(
@@ -202,6 +217,12 @@ export function BodyCompositionDialog({
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
+
+          {ocrWarning && (
+            <p className="break-words rounded-md border border-[#d9a441]/40 bg-[#fff7e3] px-3 py-2 text-xs text-[#8a5a00] dark:border-[#d9a441]/40 dark:bg-[#332a18] dark:text-[#e2b768]">
+              {ocrWarning}
+            </p>
+          )}
 
           {error && <p className="break-words text-sm text-[#c23430] dark:text-[#e5645a]">{error}</p>}
         </div>
