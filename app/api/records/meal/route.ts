@@ -9,6 +9,10 @@ import {
 } from "@/lib/db";
 import type { MealLog } from "@/types";
 
+/** 云端只存缩略图（超长 Base64 原图仍仅保存在本机） */
+const cloudImage = (url?: string): string | null =>
+  typeof url === "string" && url.length <= 60_000 ? url : null;
+
 /** 饮食打卡记录：GET 读取列表 / POST 新增（支持数组批量上行） */
 export async function GET(req: Request) {
   const auth = await requireSession(req);
@@ -33,15 +37,16 @@ export async function POST(req: Request) {
   const auth = await requireSession(req);
   if ("error" in auth) return auth.error;
   try {
-    await ensureSchema();
     const body = (await req.json().catch(() => null)) as {
       record?: MealLog;
       records?: MealLog[];
     } | null;
     const list = body?.records ?? (body?.record ? [body.record] : []);
+    // 空数组视为成功（登录/首次同步 0 记录不应报错），且无需触碰数据库
     if (!list.length) {
-      return Response.json({ error: "缺少记录数据" }, { status: 400 });
+      return Response.json({ ok: true, count: 0 });
     }
+    await ensureSchema();
 
     const statements = chunkInsert(
       "meal_logs",
@@ -49,7 +54,7 @@ export async function POST(req: Request) {
         "id", "user_id", "timestamp", "meal_type", "followed_sequence",
         "avoided_refined_carb", "post_meal_activity", "energy_reaction",
         "satiety_duration", "score", "calories", "carbs_g", "fiber_g",
-        "protein_g", "fat_g", "food_summary", "image_url",
+        "protein_g", "fat_g", "food_summary", "image_url", "updated_at",
       ],
       list.map((l) => [
         l.id, auth.userId, l.timestamp, l.mealType,
@@ -58,7 +63,8 @@ export async function POST(req: Request) {
         l.satietyDuration ?? null, l.score,
         l.nutrition?.calories ?? 0, l.nutrition?.carbsG ?? 0,
         l.nutrition?.fiberG ?? 0, l.nutrition?.proteinG ?? 0,
-        l.nutrition?.fatG ?? 0, l.foodSummary || null, null, // 图片暂不同步
+        l.nutrition?.fatG ?? 0, l.foodSummary || null, cloudImage(l.imageUrl),
+        l.updatedAt ?? null,
       ])
     );
     await execStatements(statements);

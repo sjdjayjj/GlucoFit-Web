@@ -99,6 +99,7 @@ const SCHEMA_STATEMENTS = [
     protein_weight_kg REAL,
     body_score REAL,
     image_url TEXT,
+    updated_at REAL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS meal_logs (
@@ -119,6 +120,7 @@ const SCHEMA_STATEMENTS = [
     fat_g REAL DEFAULT 0,
     food_summary TEXT,
     image_url TEXT,
+    updated_at REAL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS exercise_logs (
@@ -131,8 +133,13 @@ const SCHEMA_STATEMENTS = [
     is_post_meal INTEGER DEFAULT 0,
     muscle_feel TEXT,
     notes TEXT,
+    updated_at REAL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
+  // 旧库兼容：补充记录版本号列（毫秒时间戳），用于跨设备合并（须在 CREATE 之后）
+  `ALTER TABLE body_composition ADD COLUMN updated_at REAL`,
+  `ALTER TABLE meal_logs ADD COLUMN updated_at REAL`,
+  `ALTER TABLE exercise_logs ADD COLUMN updated_at REAL`,
   `CREATE TABLE IF NOT EXISTS ai_diagnoses (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
@@ -180,6 +187,12 @@ const num = (v: unknown, fallback = 0): number =>
 const str = (v: unknown): string | undefined =>
   typeof v === "string" && v !== "" ? v : undefined;
 const bool = (v: unknown): boolean => v === 1 || v === true;
+/** 可空数字：NULL/空串 → undefined，非法值 → undefined */
+const optNum = (v: unknown): number | undefined => {
+  if (v == null || v === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
 
 export function rowToProfile(r: Row): UserProfile {
   return {
@@ -225,6 +238,8 @@ export function rowToBodyRecord(r: Row): BodyCompositionRecord {
     boneMassKg: r.bone_mass_kg != null ? num(r.bone_mass_kg) : undefined,
     proteinWeightKg: r.protein_weight_kg != null ? num(r.protein_weight_kg) : undefined,
     notes: str(r.notes),
+    imageUrl: str(r.image_url),
+    updatedAt: optNum(r.updated_at),
   };
 }
 
@@ -240,6 +255,8 @@ export function rowToMealLog(r: Row): MealLog {
     satietyDuration: str(r.satiety_duration) as MealLog["satietyDuration"],
     score: num(r.score),
     foodSummary: str(r.food_summary) ?? "",
+    imageUrl: str(r.image_url),
+    updatedAt: optNum(r.updated_at),
     nutrition: {
       calories: num(r.calories),
       carbsG: num(r.carbs_g),
@@ -270,6 +287,7 @@ export function rowToExerciseLog(r: Row): ExerciseLog {
     isPostMeal: bool(r.is_post_meal),
     muscleFeel,
     notes: str(r.notes),
+    updatedAt: optNum(r.updated_at),
   };
 }
 

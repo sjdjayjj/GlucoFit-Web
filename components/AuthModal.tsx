@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
   CloudUpload,
@@ -19,8 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/lib/auth-store";
-import { useGlucoFitStore } from "@/lib/storage";
-import { syncAll } from "@/lib/cloud";
+import { adoptGuestData, applyAuthScope, hasGuestData, syncAll } from "@/lib/cloud";
 import { cn } from "@/lib/utils";
 
 type Mode = "login" | "register";
@@ -28,7 +27,7 @@ type Step = "form" | "migrate";
 
 /**
  * 登录 / 注册弹窗 (v2.2 中心化托管)：
- * 登录成功后若检测到本地离线数据，引导一键合并至云端。
+ * 登录成功后按账号切换本地存储作用域；若存在游客离线数据，由用户选择合并或仅用云端数据。
  */
 export function AuthModal({
   open,
@@ -50,6 +49,9 @@ export function AuthModal({
   const [submitting, setSubmitting] = useState(false);
   const [migrating, setMigrating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** 已登录但尚未切换作用域的账号 id */
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const settlingRef = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -58,27 +60,48 @@ export function AuthModal({
     }
   }, [open, mode]);
 
-  const hasLocalData = () => {
-    const s = useGlucoFitStore.getState();
-    return s.bodyRecords.length > 0 || s.mealLogs.length > 0 || s.exerciseLogs.length > 0;
-  };
-
   const finish = () => {
     onOpenChange(false);
     onSuccess?.();
   };
 
-  const handleMigrate = async () => {
+  /** 切换到目标账号作用域，按需合并游客数据，再执行双向同步 */
+  const activateScope = async (userId: string, mergeGuest: boolean) => {
+    settlingRef.current = true;
     setMigrating(true);
     setError(null);
     try {
+      await applyAuthScope(userId);
+      if (mergeGuest) adoptGuestData();
       await syncAll();
-      setMigrating(false);
       finish();
     } catch (e) {
+      setError(
+        `已登录，但同步失败：${
+          (e as Error).message || "网络异常"
+        }。可关闭弹窗后点击顶栏「同步」重试`
+      );
+    } finally {
+      settlingRef.current = false;
       setMigrating(false);
-      setError((e as Error).message || "合并失败，可稍后在设置中重试同步");
     }
+  };
+
+  const handleMigrate = () => {
+    if (pendingUserId) void activateScope(pendingUserId, true);
+  };
+
+  const handleCloudOnly = () => {
+    if (pendingUserId) void activateScope(pendingUserId, false);
+  };
+
+  /** 直接关闭「是否合并」弹窗时，默认不合并但切换作用域，避免停留在游客数据上 */
+  const handleOpenChange = (next: boolean) => {
+    if (!next && pendingUserId && step === "migrate" && !settlingRef.current) {
+      void activateScope(pendingUserId, false);
+      return;
+    }
+    onOpenChange(next);
   };
 
   const handleSubmit = async () => {
@@ -91,25 +114,22 @@ export function AuthModal({
     try {
       if (mode === "login") {
         await signIn(email.trim(), password);
-        setSubmitting(false);
-        // 登录即双向同步：拉取云端档案与记录（新设备建档），并合并本地离线数据上行。
-        // 同步失败时保留弹窗提示，可手动关闭后稍后通过顶栏同步按钮重试。
-        try {
-          await syncAll();
-          finish();
-        } catch {
-          setError("登录成功，但云端同步失败：请检查网络后点击顶栏同步按钮重试");
-        }
       } else {
         await signUp(email.trim(), password);
-        setSubmitting(false);
-        // 新注册账号云端为空，仅在有本地离线数据时引导合并上行
-        if (hasLocalData()) {
-          setStep("migrate");
-        } else {
-          finish();
-        }
       }
+      setSubmitting(false);
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId) {
+        setError("登录状态获取失败，请重试");
+        return;
+      }
+      // 游客离线数据先询问归属，避免不声不响覆盖/上行
+      if (hasGuestData()) {
+        setPendingUserId(userId);
+        setStep("migrate");
+        return;
+      }
+      await activateScope(userId, false);
     } catch (e) {
       setSubmitting(false);
       setError((e as Error).message || "操作失败");
@@ -117,7 +137,7 @@ export function AuthModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         {step === "form" ? (
           <>
@@ -206,12 +226,12 @@ export function AuthModal({
                 登录成功
               </DialogTitle>
               <DialogDescription>
-                检测到本浏览器存有离线打卡数据，是否立即合并至云端？合并后可在其他设备登录同一账号继续使用。
+                检测到本浏览器存有游客模式的离线打卡数据。是否把这些数据合并进当前账号？不合并时游客数据仍保留在本机，退出登录后可继续使用。
               </DialogDescription>
             </DialogHeader>
 
             <div className="break-words rounded-[8px] border border-[#c9d8f7] bg-accent p-3 text-xs leading-relaxed text-foreground dark:border-[#3d5480]">
-              合并规则：按记录 ID 去重、时间新者胜，本地与云端数据互不覆盖丢失。
+              合并规则：按记录 ID 去重，严格按记录更新时间（updatedAt）比较新旧，本地未上行的修改优先保留。
             </div>
 
             {error && (
@@ -221,8 +241,8 @@ export function AuthModal({
             )}
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={finish} disabled={migrating}>
-                稍后再说
+              <Button variant="outline" className="flex-1" onClick={handleCloudOnly} disabled={migrating}>
+                仅使用云端数据
               </Button>
               <Button className="flex-1" onClick={handleMigrate} disabled={migrating}>
                 {migrating ? (
@@ -230,7 +250,7 @@ export function AuthModal({
                 ) : (
                   <CloudUpload className="h-4 w-4" />
                 )}
-                立即合并
+                合并本地数据
               </Button>
             </div>
           </>

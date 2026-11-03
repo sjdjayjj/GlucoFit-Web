@@ -22,6 +22,8 @@ export interface ChatMessage {
 export interface ChatOptions {
   model?: string; // 默认使用 settings.model
   temperature?: number;
+  /** 取消信号：组件卸载/关闭弹窗时中止请求 */
+  signal?: AbortSignal;
 }
 
 /** 文本模型已配置 */
@@ -42,6 +44,7 @@ async function chatCompletion(
 ): Promise<string> {
   const res = await fetch("/api/ai", {
     method: "POST",
+    signal: opts?.signal,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       baseUrl: settings.baseUrl,
@@ -231,7 +234,8 @@ const MEAL_TEXT_ESTIMATE_PROMPT = `你是营养估算引擎。根据用户对一
 /** 文本简记 → 热量与宏量营养素估算（走文本模型，无需照片） */
 export async function estimateMealNutrition(
   settings: AISettings,
-  text: string
+  text: string,
+  signal?: AbortSignal
 ): Promise<NutritionSummary> {
   const raw = await chatCompletion(
     settings,
@@ -239,7 +243,7 @@ export async function estimateMealNutrition(
       { role: "system", content: MEAL_TEXT_ESTIMATE_PROMPT },
       { role: "user", content: text },
     ],
-    { model: settings.model, temperature: 0.2 }
+    { model: settings.model, temperature: 0.2, signal }
   );
   const parsed = extractJson<Record<string, unknown>>(raw);
   if (!parsed) {
@@ -401,10 +405,52 @@ export interface DiagnosisResult {
   actions: string[];
 }
 
+const PLATEAU_STATUS_SET = new Set<PlateauStatus>([
+  "improving",
+  "plateau",
+  "regressing",
+  "insufficient_data",
+]);
+
+/**
+ * 运行时归一化 AI 诊断报告（兼容旧缓存 / 模型返回非法值）：
+ * 非法枚举回退 insufficient_data，缺失数组回退空数组，缺失字段回退空串。
+ * overall 缺失视为无效报告，返回 null。
+ */
+export function normalizeDiagnosisResult(raw: unknown): DiagnosisResult | null {
+  if (!raw || typeof raw !== "object") return null;
+  const data = raw as Record<string, unknown>;
+  const overall = typeof data.overall === "string" ? data.overall.trim() : "";
+  if (!overall) return null;
+
+  const asText = (v: unknown): string => (typeof v === "string" ? v : "");
+  const plateauStatus =
+    typeof data.plateauStatus === "string" &&
+    PLATEAU_STATUS_SET.has(data.plateauStatus as PlateauStatus)
+      ? (data.plateauStatus as PlateauStatus)
+      : "insufficient_data";
+  const actions = Array.isArray(data.actions)
+    ? data.actions
+        .filter((a): a is string => typeof a === "string")
+        .map((a) => a.trim())
+        .filter(Boolean)
+        .slice(0, 5)
+    : [];
+
+  return {
+    overall,
+    muscleStatus: asText(data.muscleStatus),
+    insulinStatus: asText(data.insulinStatus),
+    plateauStatus,
+    actions,
+  };
+}
+
 export async function generateWeeklyDiagnosis(
   settings: AISettings,
   stats: WeeklyStats,
-  goal: UserGoalConfig
+  goal: UserGoalConfig,
+  signal?: AbortSignal
 ): Promise<DiagnosisResult> {
   const raw = await chatCompletion(
     settings,
@@ -415,23 +461,12 @@ export async function generateWeeklyDiagnosis(
         content: `近 7 天统计数据（JSON）：${JSON.stringify(stats)}\n用户目标：体重 ${goal.targetWeightKg} kg、体脂率 ${goal.targetBodyFatRate}%。`,
       },
     ],
-    { temperature: 0.4 }
+    { temperature: 0.4, signal }
   );
-  const parsed = extractJson<{
-    overall?: string;
-    muscleStatus?: string;
-    insulinStatus?: string;
-    plateauStatus?: PlateauStatus;
-    actions?: string[];
-  }>(raw);
-  if (!parsed?.overall) {
+  const parsed = extractJson<Record<string, unknown>>(raw);
+  const result = normalizeDiagnosisResult(parsed);
+  if (!result) {
     throw new Error("AI 未返回有效的诊断报告，请重试");
   }
-  return {
-    overall: parsed.overall,
-    muscleStatus: parsed.muscleStatus || "",
-    insulinStatus: parsed.insulinStatus || "",
-    plateauStatus: parsed.plateauStatus || "insufficient_data",
-    actions: Array.isArray(parsed.actions) ? parsed.actions.slice(0, 5) : [],
-  };
+  return result;
 }
