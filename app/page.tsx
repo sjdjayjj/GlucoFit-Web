@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Activity,
   CalendarDays,
@@ -17,7 +18,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthModal } from "@/components/AuthModal";
 import { BodyMetricsCard } from "@/components/BodyMetricsCard";
 import { BodyCompositionDialog } from "@/components/BodyCompositionDialog";
-import { CompositionCharts } from "@/components/CompositionCharts";
 import { CravingSosDialog } from "@/components/CravingSosDialog";
 import { EnergyBalanceCard } from "@/components/EnergyBalanceCard";
 import { ExerciseLogDialog } from "@/components/ExerciseLogDialog";
@@ -29,7 +29,6 @@ import { MealPlanner } from "@/components/MealPlanner";
 import { MilestoneBar } from "@/components/MilestoneBar";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { SettingsDialog } from "@/components/SettingsDialog";
-import { VirtualMetabolicWave } from "@/components/VirtualMetabolicWave";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGlucoFitStore } from "@/lib/storage";
@@ -40,6 +39,35 @@ import { GUEST_SCOPE, migrateLegacyKeys, onStorageQuotaExceeded } from "@/lib/pe
 import { migrateLegacyImages } from "@/lib/image-migrate";
 import { fmtDate } from "@/lib/utils";
 import type { MealLog, MealLogPrefill, MealRecommendation } from "@/types";
+
+/**
+ * Recharts 体积较大（约占首屏 chunk 的主要部分），改为客户端按需加载：
+ * ssr:false 让图表 chunk 延后到水合后拉取，首屏 HTML/JS 不再包含 Recharts。
+ * loading 占位使用固定高度，避免图表挂载时引发布局跳动（CLS）。
+ */
+function ChartSkeleton({ className }: { className?: string }) {
+  return (
+    <Card className={className}>
+      <div className="animate-pulse p-5 sm:p-6">
+        <div className="h-4 w-40 rounded bg-muted" />
+        <div className="mt-2 h-3 w-64 rounded bg-muted" />
+        <div className="mt-5 h-40 rounded-lg bg-muted/60" />
+      </div>
+    </Card>
+  );
+}
+
+const VirtualMetabolicWave = dynamic(
+  () =>
+    import("@/components/VirtualMetabolicWave").then((m) => m.VirtualMetabolicWave),
+  { ssr: false, loading: () => <ChartSkeleton className="min-h-[360px] sm:min-h-[410px]" /> }
+);
+
+const CompositionCharts = dynamic(
+  () =>
+    import("@/components/CompositionCharts").then((m) => m.CompositionCharts),
+  { ssr: false, loading: () => <ChartSkeleton className="min-h-[560px] sm:min-h-[620px]" /> }
+);
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -97,6 +125,19 @@ export default function Home() {
     const timer = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  // 本地存储配额耗尽（localStorage 写入失败）：明确提示，不静默丢数据
+  // 必须在 mounted 提前 return 之前注册，保证 hooks 调用顺序恒定
+  useEffect(
+    () =>
+      onStorageQuotaExceeded(() => {
+        setToast({
+          ok: false,
+          message: "本地存储空间已满：本次修改可能未保存，请删除旧记录或清理浏览器存储",
+        });
+      }),
+    []
+  );
 
   const todayMeals = useMemo(() => {
     const today = fmtDate(new Date());
@@ -171,18 +212,6 @@ export default function Home() {
   };
 
   const showToast = (ok: boolean, message: string) => setToast({ ok, message });
-
-  // 本地存储配额耗尽（localStorage 写入失败）：明确提示，不静默丢数据
-  useEffect(
-    () =>
-      onStorageQuotaExceeded(() => {
-        setToast({
-          ok: false,
-          message: "本地存储空间已满：本次修改可能未保存，请删除旧记录或清理浏览器存储",
-        });
-      }),
-    []
-  );
 
   const handleSync = async () => {
     try {

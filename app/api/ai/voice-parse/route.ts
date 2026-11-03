@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     let url = String(body.baseUrl).replace(/\/+$/, "");
     if (!/\/chat\/completions$/.test(url)) url += "/chat/completions";
     try {
-      assertSafeUpstreamUrl(url);
+      await assertSafeUpstreamUrl(url);
     } catch (e) {
       return Response.json({ error: (e as Error).message }, { status: 400 });
     }
