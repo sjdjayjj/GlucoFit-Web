@@ -32,9 +32,11 @@ export interface MealLog {
   energyReaction: EnergyReaction; // 餐后精力反应 (IR 核心自检项)
   satietyDuration?: SatietyDuration; // 饱腹维持时长
   score: number; // 稳糖表现分 (0-100)
-  imageUrl?: string; // 菜品照片 (压缩后 Base64)
+  imageUrl?: string; // 菜品照片缩略图 (Base64)；原图存 IndexedDB
   foodSummary: string; // 食物描述
   nutrition?: NutritionSummary; // AI 估算/手动录入的热量宏量
+  /** 记录版本（毫秒时间戳）：新增/编辑均刷新，云同步按此严格比较新旧 */
+  updatedAt?: number;
 }
 
 // --- 4. 智能体脂秤体征打卡数据 (v2 升级：截图原图) ---
@@ -51,6 +53,8 @@ export interface BodyCompositionRecord {
   boneMassKg?: number; // 骨盐量 (kg，如 3.2)
   proteinWeightKg?: number; // 蛋白质量 (kg，如 12.7)
   notes?: string;
+  /** 记录版本（毫秒时间戳）：新增/编辑均刷新，云同步按此严格比较新旧 */
+  updatedAt?: number;
 }
 
 // --- 5. 全局目标与偏好 ---
@@ -132,6 +136,8 @@ export interface ExerciseLog {
   isPostMeal: boolean; // 是否紧邻餐后 30-45 分钟内
   muscleFeel?: string[]; // 肌肉刺激体感标签
   notes?: string;
+  /** 记录版本（毫秒时间戳）：新增/编辑均刷新，云同步按此严格比较新旧 */
+  updatedAt?: number;
 }
 
 // --- 10. 每日热量与代谢结算聚合 (v2.1) ---

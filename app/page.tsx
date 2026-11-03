@@ -35,7 +35,9 @@ import { Button } from "@/components/ui/button";
 import { useGlucoFitStore } from "@/lib/storage";
 import { useProfileStore } from "@/lib/profile";
 import { useAuthStore } from "@/lib/auth-store";
-import { syncAll, useSyncRuntimeStore, useSyncMetaStore } from "@/lib/cloud";
+import { syncAll, useSyncRuntimeStore, useSyncMetaStore, applyAuthScope } from "@/lib/cloud";
+import { GUEST_SCOPE, migrateLegacyKeys, onStorageQuotaExceeded } from "@/lib/persist-scope";
+import { migrateLegacyImages } from "@/lib/image-migrate";
 import { fmtDate } from "@/lib/utils";
 import type { MealLog, MealLogPrefill, MealRecommendation } from "@/types";
 
@@ -66,8 +68,13 @@ export default function Home() {
     setMounted(true);
     void (async () => {
       await refreshAuth();
-      // 已有会话但本机无档案（如新设备曾登录但未完成同步）：静默拉取云端建档
       const { user: u } = useAuthStore.getState();
+      // 旧版未按账号分域的 localStorage：先并入当前作用域，再切换到真实作用域
+      migrateLegacyKeys(u?.id ?? GUEST_SCOPE);
+      await applyAuthScope(u?.id ?? null);
+      // 历史 Base64 大图转存 IndexedDB，释放 localStorage
+      await migrateLegacyImages();
+      // 已有会话但本机无档案（如新设备曾登录但未完成同步）：静默拉取云端建档
       if (u && !useProfileStore.getState().profile) {
         syncAll().catch(() => null);
       }
@@ -163,6 +170,18 @@ export default function Home() {
 
   const showToast = (ok: boolean, message: string) => setToast({ ok, message });
 
+  // 本地存储配额耗尽（localStorage 写入失败）：明确提示，不静默丢数据
+  useEffect(
+    () =>
+      onStorageQuotaExceeded(() => {
+        setToast({
+          ok: false,
+          message: "本地存储空间已满：本次修改可能未保存，请删除旧记录或清理浏览器存储",
+        });
+      }),
+    []
+  );
+
   const handleSync = async () => {
     try {
       await syncAll();
@@ -173,10 +192,10 @@ export default function Home() {
   };
 
   const handleSignOut = async () => {
-    // 清空同步元信息：确保下次登录（可能切换账号）执行一次全量上行
-    useSyncMetaStore.getState().resetLastSyncAt();
     await signOut();
-    showToast(true, "已退出登录，当前数据保留在本机");
+    // 切回游客作用域：避免下一账号登录时把上一账号的本机数据全量上行
+    await applyAuthScope(null);
+    showToast(true, "已退出登录，游客数据仍保留在本机");
   };
 
   return (

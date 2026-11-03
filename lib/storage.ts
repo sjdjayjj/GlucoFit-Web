@@ -15,8 +15,47 @@ import type {
 import type { WeeklyScheduleConfig } from "@/types/v3";
 import { computeMealScore } from "@/lib/scoring";
 import { daysAgoDateStr, uid } from "@/lib/utils";
+import { backfillUpdatedAt, mergeRecordList } from "@/lib/merge";
+import {
+  safeGetRaw,
+  safeRemoveRaw,
+  safeSetRaw,
+  scopedKey,
+  scopedStorage,
+} from "@/lib/persist-scope";
 
 const STORAGE_KEY = "glucofit-web-storage";
+
+export type DirtyKind = "body" | "meal" | "exercise";
+
+/** 新作用域（新账号/游客）的初始数据：空记录，不带演示种子 */
+const EMPTY_DATA_STATE = {
+  bodyRecords: [] as BodyCompositionRecord[],
+  mealLogs: [] as MealLog[],
+  exerciseLogs: [] as ExerciseLog[],
+  goal: { targetWeightKg: 70, targetBodyFatRate: 18, fastingProtocol: "16:8" } as UserGoalConfig,
+  eatingWindowStartHour: 10,
+  activityFactor: 1.375,
+  weeklySchedule: null,
+  pendingDeletedMealIds: [] as string[],
+  pendingDeletedExerciseIds: [] as string[],
+  dirtyBodyIds: [] as string[],
+  dirtyMealIds: [] as string[],
+  dirtyExerciseIds: [] as string[],
+};
+
+/** 作用域切换时把内存重置为当前作用域的初始数据（随后由 persist.rehydrate 覆盖） */
+export function resetLocalStoreForScopeSwitch(): void {
+  useGlucoFitStore.setState(EMPTY_DATA_STATE);
+}
+
+export const EMPTY_AI_SETTINGS: AISettings = {
+  baseUrl: "",
+  apiKey: "",
+  model: "",
+  visionModel: "",
+  deepThinking: false,
+};
 
 // ---------- Mock 数据（基于体脂秤截图 + 最近 7 天趋势，日期相对当天生成） ----------
 
@@ -180,6 +219,12 @@ function stripDemoState(s: {
 const markDirty = (ids: string[] | undefined, id: string): string[] =>
   (ids ?? []).includes(id) ? ids ?? [] : [...(ids ?? []), id];
 
+/** 新增记录时写入版本号（毫秒）；已有版本（导入/迁移）则保留 */
+const withUpdatedAt = <T extends { updatedAt?: number }>(record: T): T => ({
+  ...record,
+  updatedAt: record.updatedAt ?? Date.now(),
+});
+
 interface GlucoFitState {
   bodyRecords: BodyCompositionRecord[];
   mealLogs: MealLog[];
@@ -207,7 +252,8 @@ interface GlucoFitState {
   dirtyBodyIds: string[];
   dirtyMealIds: string[];
   dirtyExerciseIds: string[];
-  clearDirtyIds: () => void;
+  /** 清除已成功上行的增量标记；不传则清空全部 */
+  clearDirtyIds: (kinds?: DirtyKind[]) => void;
   updateGoal: (partial: Partial<UserGoalConfig>) => void;
   setEatingWindowStartHour: (hour: number) => void;
   setActivityFactor: (factor: number) => void;
@@ -238,9 +284,10 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       addBodyRecord: (record) =>
         set((s) => {
           const stripped = stripDemoState(s);
+          const next = withUpdatedAt(record);
           return {
             ...stripped,
-            bodyRecords: [...(stripped.bodyRecords ?? []), record].sort((a, b) =>
+            bodyRecords: [...(stripped.bodyRecords ?? []), next].sort((a, b) =>
               a.date.localeCompare(b.date)
             ),
             dirtyBodyIds: markDirty(s.dirtyBodyIds, record.id),
@@ -249,9 +296,10 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       addMealLog: (log) =>
         set((s) => {
           const stripped = stripDemoState(s);
+          const next = withUpdatedAt(log);
           return {
             ...stripped,
-            mealLogs: [...(stripped.mealLogs ?? []), log].sort((a, b) =>
+            mealLogs: [...(stripped.mealLogs ?? []), next].sort((a, b) =>
               a.timestamp.localeCompare(b.timestamp)
             ),
             dirtyMealIds: markDirty(s.dirtyMealIds, log.id),
@@ -260,7 +308,11 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       updateMealLog: (id, partial) =>
         set((s) => ({
           mealLogs: s.mealLogs
-            .map((l) => (l.id === id ? { ...l, ...partial } : l))
+            .map((l) =>
+              l.id === id
+                ? { ...l, ...partial, id: l.id, updatedAt: Date.now() }
+                : l
+            )
             .sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
           dirtyMealIds: markDirty(s.dirtyMealIds, id),
         })),
@@ -275,9 +327,10 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       addExerciseLog: (log) =>
         set((s) => {
           const stripped = stripDemoState(s);
+          const next = withUpdatedAt(log);
           return {
             ...stripped,
-            exerciseLogs: [...(stripped.exerciseLogs ?? []), log].sort((a, b) =>
+            exerciseLogs: [...(stripped.exerciseLogs ?? []), next].sort((a, b) =>
               a.timestamp.localeCompare(b.timestamp)
             ),
             dirtyExerciseIds: markDirty(s.dirtyExerciseIds, log.id),
@@ -291,8 +344,16 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             : [...(s.pendingDeletedExerciseIds ?? []), id],
         })),
       clearPendingDeletedExerciseIds: () => set({ pendingDeletedExerciseIds: [] }),
-      clearDirtyIds: () =>
-        set({ dirtyBodyIds: [], dirtyMealIds: [], dirtyExerciseIds: [] }),
+      clearDirtyIds: (kinds) =>
+        set((s) => {
+          const all = !kinds || kinds.length === 0;
+          return {
+            dirtyBodyIds: all || kinds.includes("body") ? [] : s.dirtyBodyIds,
+            dirtyMealIds: all || kinds.includes("meal") ? [] : s.dirtyMealIds,
+            dirtyExerciseIds:
+              all || kinds.includes("exercise") ? [] : s.dirtyExerciseIds,
+          };
+        }),
       updateGoal: (partial) =>
         set((s) => ({ goal: { ...s.goal, ...partial } })),
       setEatingWindowStartHour: (hour) =>
@@ -302,58 +363,28 @@ export const useGlucoFitStore = create<GlucoFitState>()(
       mergeCloudData: ({ bodyRecords, mealLogs, exerciseLogs }) =>
         set((s) => {
           const next: Partial<GlucoFitState> = {};
-          // 云端采纳（覆盖本地或本机缺失）的记录视为已与云端一致，移出待上行清单
-          const adoptedBody: string[] = [];
-          const adoptedMeal: string[] = [];
-          const adoptedExercise: string[] = [];
+          // 严格按 updatedAt 比较；本地 dirty / tombstone 记录绝不覆盖；相等时本地优先
           if (bodyRecords?.length) {
-            const byId = new Map(s.bodyRecords.map((r) => [r.id, r]));
-            for (const r of bodyRecords) {
-              const local = byId.get(r.id);
-              if (!local || r.date >= local.date) {
-                byId.set(r.id, r);
-                adoptedBody.push(r.id);
-              }
-            }
-            next.bodyRecords = Array.from(byId.values()).sort((a, b) =>
-              a.date.localeCompare(b.date)
-            );
+            next.bodyRecords = mergeRecordList(s.bodyRecords, bodyRecords, {
+              dirtyIds: s.dirtyBodyIds,
+            }).sort((a, b) => a.date.localeCompare(b.date));
           }
           if (mealLogs?.length) {
-            const tombstones = new Set(s.pendingDeletedMealIds ?? []);
-            const byId = new Map(s.mealLogs.map((r) => [r.id, r]));
-            for (const r of mealLogs) {
-              // 本机已删除（待云端删除）的记录不从云端恢复，避免删除被回滚
-              if (tombstones.has(r.id)) continue;
-              const local = byId.get(r.id);
-              if (!local || r.timestamp >= local.timestamp) {
-                byId.set(r.id, r);
-                adoptedMeal.push(r.id);
-              }
-            }
-            next.mealLogs = Array.from(byId.values()).sort((a, b) =>
-              a.timestamp.localeCompare(b.timestamp)
-            );
+            next.mealLogs = mergeRecordList(s.mealLogs, mealLogs, {
+              dirtyIds: s.dirtyMealIds,
+              tombstoneIds: s.pendingDeletedMealIds,
+            }).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
           }
           if (exerciseLogs?.length) {
-            const tombstones = new Set(s.pendingDeletedExerciseIds ?? []);
-            const byId = new Map(s.exerciseLogs.map((r) => [r.id, r]));
-            for (const r of exerciseLogs) {
-              if (tombstones.has(r.id)) continue;
-              const local = byId.get(r.id);
-              if (!local || r.timestamp >= local.timestamp) {
-                byId.set(r.id, r);
-                adoptedExercise.push(r.id);
+            next.exerciseLogs = mergeRecordList(
+              s.exerciseLogs,
+              exerciseLogs,
+              {
+                dirtyIds: s.dirtyExerciseIds,
+                tombstoneIds: s.pendingDeletedExerciseIds,
               }
-            }
-            next.exerciseLogs = Array.from(byId.values()).sort((a, b) =>
-              a.timestamp.localeCompare(b.timestamp)
-            );
+            ).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
           }
-          const dropDirty = (ids: string[] | undefined, adopted: string[]) =>
-            adopted.length
-              ? (ids ?? []).filter((id) => !adopted.includes(id))
-              : ids ?? [];
           // 云端数据到达即剔除演示种子，避免与真实记录混合；餐记录进 tombstone 以清理云端
           return {
             ...next,
@@ -363,20 +394,17 @@ export const useGlucoFitStore = create<GlucoFitState>()(
               bodyRecords: next.bodyRecords ?? s.bodyRecords,
               exerciseLogs: next.exerciseLogs ?? s.exerciseLogs,
             }),
-            dirtyBodyIds: dropDirty(s.dirtyBodyIds, adoptedBody),
-            dirtyMealIds: dropDirty(s.dirtyMealIds, adoptedMeal),
-            dirtyExerciseIds: dropDirty(s.dirtyExerciseIds, adoptedExercise),
           };
         }),
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
-      // v1：清理历史版本遗留的无 demo- 前缀演示种子数据（按文案指纹识别）
-      migrate: (persisted) => {
+      version: 2,
+      // v1：清理演示种子；v2：为历史记录补 updatedAt（用 timestamp/date 兜底）
+      migrate: (persisted, version) => {
         const p = persisted as Partial<GlucoFitState> | null;
         if (!p || !Array.isArray(p.mealLogs)) return p as GlucoFitState;
-        return {
+        const base = {
           ...p,
           ...stripDemoState({
             mealLogs: p.mealLogs,
@@ -385,8 +413,14 @@ export const useGlucoFitStore = create<GlucoFitState>()(
             pendingDeletedMealIds: p.pendingDeletedMealIds,
           }),
         } as GlucoFitState;
+        if (version < 2) {
+          base.bodyRecords = backfillUpdatedAt(base.bodyRecords ?? []);
+          base.mealLogs = backfillUpdatedAt(base.mealLogs ?? []);
+          base.exerciseLogs = backfillUpdatedAt(base.exerciseLogs ?? []);
+        }
+        return base;
       },
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => scopedStorage),
     }
   )
 );
@@ -417,11 +451,10 @@ function deobfuscate(text: string): string {
   return new TextDecoder().decode(bytes);
 }
 
-/** XOR + Base64 混淆存储，避免 API Key 明文暴露在 localStorage */
+/** XOR + Base64 混淆存储（按账号作用域），避免 API Key 明文暴露在 localStorage */
 const obfuscatedStorage: StateStorage = {
   getItem: (name) => {
-    if (typeof localStorage === "undefined") return null;
-    const raw = localStorage.getItem(name);
+    const raw = safeGetRaw(scopedKey(name)) ?? safeGetRaw(name);
     if (!raw) return null;
     try {
       return deobfuscate(raw);
@@ -430,12 +463,11 @@ const obfuscatedStorage: StateStorage = {
     }
   },
   setItem: (name, value) => {
-    if (typeof localStorage === "undefined") return;
-    localStorage.setItem(name, obfuscate(value));
+    safeSetRaw(scopedKey(name), obfuscate(value));
   },
   removeItem: (name) => {
-    if (typeof localStorage === "undefined") return;
-    localStorage.removeItem(name);
+    safeRemoveRaw(scopedKey(name));
+    safeRemoveRaw(name);
   },
 };
 
@@ -447,7 +479,7 @@ interface AISettingsState {
 export const useAISettingsStore = create<AISettingsState>()(
   persist(
     (set) => ({
-      aiSettings: { baseUrl: "", apiKey: "", model: "", visionModel: "", deepThinking: false },
+      aiSettings: EMPTY_AI_SETTINGS,
       updateAISettings: (aiSettings) => set({ aiSettings }),
     }),
     {

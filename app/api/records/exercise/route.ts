@@ -33,27 +33,29 @@ export async function POST(req: Request) {
   const auth = await requireSession(req);
   if ("error" in auth) return auth.error;
   try {
-    await ensureSchema();
     const body = (await req.json().catch(() => null)) as {
       record?: ExerciseLog;
       records?: ExerciseLog[];
     } | null;
     const list = body?.records ?? (body?.record ? [body.record] : []);
+    // 空数组视为成功（登录/首次同步 0 记录不应报错），且无需触碰数据库
     if (!list.length) {
-      return Response.json({ error: "缺少记录数据" }, { status: 400 });
+      return Response.json({ ok: true, count: 0 });
     }
+    await ensureSchema();
 
     const statements = chunkInsert(
       "exercise_logs",
       [
         "id", "user_id", "timestamp", "category", "duration_minutes",
         "calories_burned", "is_post_meal", "muscle_feel", "notes",
+        "updated_at",
       ],
       list.map((l) => [
         l.id, auth.userId, l.timestamp, l.category,
         l.durationMinutes, l.caloriesBurned, boolInt(l.isPostMeal),
         l.muscleFeel?.length ? JSON.stringify(l.muscleFeel) : null,
-        l.notes ?? null,
+        l.notes ?? null, l.updatedAt ?? null,
       ])
     );
     await execStatements(statements);

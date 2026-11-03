@@ -19,9 +19,11 @@ import { useAuthStore } from "@/lib/auth-store";
 import {
   generateWeeklyDiagnosis,
   isAIConfigured,
+  normalizeDiagnosisResult,
   type DiagnosisResult,
   type PlateauStatus,
 } from "@/lib/ai-client";
+import { scopedKey } from "@/lib/persist-scope";
 import type { CachedAIDiagnosis } from "@/types";
 import { fmtDate, shortTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -48,13 +50,34 @@ const PLATEAU_BADGE: Record<PlateauStatus, { label: string; className: string }>
   },
 };
 
-const CACHE_KEY = "glucofit-ai-diagnosis-cache";
-const ATTEMPT_KEY = "glucofit-ai-diagnosis-attempt";
+const CACHE_BASE_KEY = "glucofit-ai-diagnosis-cache";
+const ATTEMPT_BASE_KEY = "glucofit-ai-diagnosis-attempt";
+
+/** 缓存 key 按账号作用域隔离 */
+const cacheKey = () => scopedKey(CACHE_BASE_KEY);
+const attemptKey = () => scopedKey(ATTEMPT_BASE_KEY);
+
+/** 旧缓存缺字段/类型非法时归一化，避免渲染崩溃 */
+function normalizeCacheEntry(raw: unknown): CachedAIDiagnosis | null {
+  if (!raw || typeof raw !== "object") return null;
+  const data = raw as Record<string, unknown>;
+  if (typeof data.content !== "string" || !data.content) return null;
+  if (!normalizeDiagnosisResult(parseContent(data.content))) return null;
+  const generatedAt =
+    typeof data.generatedAt === "string" && data.generatedAt
+      ? data.generatedAt
+      : new Date().toISOString();
+  const dateStr =
+    typeof data.dateStr === "string" && data.dateStr
+      ? data.dateStr
+      : fmtDate(new Date(generatedAt));
+  return { content: data.content, generatedAt, dateStr };
+}
 
 function readCache(): CachedAIDiagnosis | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? (JSON.parse(raw) as CachedAIDiagnosis) : null;
+    const raw = localStorage.getItem(cacheKey());
+    return raw ? normalizeCacheEntry(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
@@ -62,7 +85,7 @@ function readCache(): CachedAIDiagnosis | null {
 
 function writeCache(cache: CachedAIDiagnosis) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    localStorage.setItem(cacheKey(), JSON.stringify(cache));
   } catch {
     /* 存储不可用时忽略 */
   }
@@ -70,7 +93,7 @@ function writeCache(cache: CachedAIDiagnosis) {
 
 function parseContent(content: string): DiagnosisResult | null {
   try {
-    return JSON.parse(content) as DiagnosisResult;
+    return normalizeDiagnosisResult(JSON.parse(content));
   } catch {
     return null;
   }
@@ -137,15 +160,10 @@ export function AIDiagnosisCard() {
         const data = (await res.json().catch(() => null)) as {
           record?: { content: string; generatedAt: string; dateStr: string } | null;
         } | null;
-        const cloud = data?.record;
-        if (cloud?.content && (!local || cloud.generatedAt > local.generatedAt)) {
-          const next: CachedAIDiagnosis = {
-            content: cloud.content,
-            generatedAt: cloud.generatedAt,
-            dateStr: cloud.dateStr,
-          };
-          writeCache(next);
-          setCache(next);
+        const cloud = data?.record ? normalizeCacheEntry(data.record) : null;
+        if (cloud && (!local || cloud.generatedAt > local.generatedAt)) {
+          writeCache(cloud);
+          setCache(cloud);
         }
       } catch {
         /* 云端缓存拉取失败不影响本地展示 */
@@ -161,30 +179,29 @@ export function AIDiagnosisCard() {
     if (current?.dateStr === todayStr) return;
     let attempted = false;
     try {
-      attempted = localStorage.getItem(ATTEMPT_KEY) === todayStr;
+      attempted = localStorage.getItem(attemptKey()) === todayStr;
     } catch {
       /* 忽略 */
     }
     if (attempted) return;
     autoRunStarted.current = true;
-    try {
-      localStorage.setItem(ATTEMPT_KEY, todayStr);
-    } catch {
-      /* 忽略 */
-    }
     (async () => {
       const ok = await generate();
-      if (ok) {
-        setJustAutoRun(true);
-        // 登录态下双写云端
-        const latest = readCache();
-        if (authUser && latest) {
-          void fetch("/api/ai/diagnose", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(latest),
-          }).catch(() => null);
-        }
+      if (!ok) return; // 失败不写「已尝试」标记，下次进入可重试
+      try {
+        localStorage.setItem(attemptKey(), todayStr);
+      } catch {
+        /* 忽略 */
+      }
+      setJustAutoRun(true);
+      // 登录态下双写云端
+      const latest = readCache();
+      if (authUser && latest) {
+        void fetch("/api/ai/diagnose", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(latest),
+        }).catch(() => null);
       }
     })();
   }, [stats, configured, todayStr, generate, authUser]);

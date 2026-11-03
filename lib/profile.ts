@@ -1,8 +1,9 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { BodyCompositionRecord, ExerciseCategory, UserProfile } from "@/types";
+import { scopedStorage } from "@/lib/persist-scope";
 
 /**
  * 用户初始体态档案与代谢基准 (v2.1)
@@ -28,7 +29,10 @@ export const useProfileStore = create<ProfileState>()(
       dismissOnboarding: () => set({ onboardingDismissed: true }),
       reopenOnboarding: () => set({ onboardingDismissed: false }),
     }),
-    { name: "glucofit-profile" }
+    {
+      name: "glucofit-profile",
+      storage: createJSONStorage(() => scopedStorage),
+    }
   )
 );
 

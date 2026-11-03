@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BodyImageUploader } from "@/components/BodyImageUploader";
 import { useGlucoFitStore } from "@/lib/storage";
+import { downscaleDataUrl } from "@/lib/image";
+import { putFullImage } from "@/lib/image-idb";
 import { todayDateStr, uid } from "@/lib/utils";
 import type { BodyCompositionRecord } from "@/types";
 
@@ -56,9 +58,12 @@ export function BodyCompositionDialog({
   const [notes, setNotes] = useState("");
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  /** 本条记录的 id：原图以该 id 存入 IndexedDB，store 只留缩略图 */
+  const recordIdRef = useRef<string>(uid());
 
   useEffect(() => {
     if (open) {
+      recordIdRef.current = uid();
       setDate(todayDateStr());
       setValues({});
       setNotes("");
@@ -85,7 +90,7 @@ export function BodyCompositionDialog({
     }
     setError(null);
     addBodyRecord({
-      id: uid(),
+      id: recordIdRef.current,
       date,
       imageUrl,
       weightKg: parsed.weightKg,
@@ -149,8 +154,17 @@ export function BodyCompositionDialog({
               if (result.proteinWeightKg != null)
                 next.proteinWeightKg = String(result.proteinWeightKg);
               setValues(next);
-              setImageUrl(img);
               setError(null);
+              // 原图转存 IndexedDB（store 只保留缩略图）；IDB 不可用时降级为原始 Base64
+              void (async () => {
+                const thumb = await downscaleDataUrl(img, 160, 0.6).catch(
+                  () => undefined
+                );
+                const stored = thumb
+                  ? await putFullImage(recordIdRef.current, img)
+                  : false;
+                setImageUrl(stored && thumb ? thumb : img);
+              })();
             }}
           />
 

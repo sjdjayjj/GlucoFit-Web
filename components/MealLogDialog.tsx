@@ -38,7 +38,8 @@ import {
 import { computeMealScore, getScoreTone, SCORE_TONE_CLASS } from "@/lib/scoring";
 import { useAISettingsStore, useGlucoFitStore } from "@/lib/storage";
 import { analyzeMealPhoto, estimateMealNutrition } from "@/lib/ai-client";
-import { downscaleImageFile } from "@/lib/image";
+import { downscaleDataUrl, downscaleImageFile } from "@/lib/image";
+import { deleteFullImage, putFullImage } from "@/lib/image-idb";
 import { MealVoiceInput, type VoiceMealParse } from "@/components/MealVoiceInput";
 import { PreMealRadar } from "@/components/PreMealRadar";
 import { cn, uid } from "@/lib/utils";
@@ -121,6 +122,26 @@ function SegmentedButton({
   );
 }
 
+/** 仅用 AI 结果填充用户未手动修改过的字段 */
+function mergeEstimatedNutrition(
+  prev: NutritionSummary | null,
+  ai: NutritionSummary,
+  touched: Set<keyof NutritionSummary>
+): NutritionSummary {
+  const base: NutritionSummary = prev ?? {
+    calories: 0,
+    carbsG: 0,
+    proteinG: 0,
+    fatG: 0,
+    fiberG: 0,
+  };
+  const next: NutritionSummary = { ...base };
+  for (const key of NUTRITION_FIELDS) {
+    if (!touched.has(key.key)) next[key.key] = ai[key.key] ?? 0;
+  }
+  return next;
+}
+
 export function MealLogDialog({
   open,
   onOpenChange,
@@ -153,9 +174,21 @@ export function MealLogDialog({
   const [textEstimating, setTextEstimating] = useState(false);
   const [textEstimateError, setTextEstimateError] = useState<string | null>(null);
   const estimatedTextRef = useRef<string | null>(null);
+  /** 本次记录的 id：图片原图以该 id 存入 IndexedDB */
+  const recordIdRef = useRef<string>(uid());
+  /** 用户手动编辑过的营养字段，AI 返回时不再覆盖 */
+  const touchedNutritionRef = useRef<Set<keyof NutritionSummary>>(new Set());
+  /** 文本估算请求序号与取消控制器 */
+  const estimateSeqRef = useRef(0);
+  const estimateAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (open) {
+      recordIdRef.current = prefill?.id ?? uid();
+      touchedNutritionRef.current = new Set();
+      estimateSeqRef.current += 1;
+      estimateAbortRef.current?.abort();
+      estimateAbortRef.current = null;
       setMode("log");
       setMealType(prefill?.mealType ?? guessMealType());
       setFollowedSequence(prefill?.followedSequence ?? true);
@@ -210,7 +243,14 @@ export function MealLogDialog({
     setAnalysisError(null);
     try {
       const dataUrl = await downscaleImageFile(file);
-      setImageUrl(dataUrl);
+      // 原图转存 IndexedDB，store 只保留缩略图（IDB 不可用时降级为原始 Base64）
+      const thumb = await downscaleDataUrl(dataUrl, 160, 0.6).catch(() => undefined);
+      const storedOnIdb = thumb
+        ? await putFullImage(recordIdRef.current, dataUrl)
+        : false;
+      setImageUrl(storedOnIdb && thumb ? thumb : dataUrl);
+      // 新照片识别结果视为新的 AI 估算，清除手填标记
+      touchedNutritionRef.current = new Set();
       await runAnalysis(dataUrl);
     } catch (e) {
       setAnalysisError((e as Error).message || "照片识别失败，请重试");
@@ -235,26 +275,44 @@ export function MealLogDialog({
     }));
   };
 
-  /** 简记文字防抖触发 AI 热量估算；拍照/语音已带营养数据时跳过，避免重复调用 */
+  /** 简记文字防抖触发 AI 热量估算；已带营养数据时跳过，返回时只填用户未改的字段 */
   useEffect(() => {
     if (!open || mode !== "log") return;
     const text = foodSummary.trim();
     if (text.length < 4 || text === estimatedTextRef.current) return;
     if (!aiSettings.baseUrl || !aiSettings.apiKey || !aiSettings.model) return;
+    const controller = new AbortController();
     const timer = setTimeout(() => {
+      estimateAbortRef.current?.abort();
+      estimateAbortRef.current = controller;
+      const seq = estimateSeqRef.current + 1;
+      estimateSeqRef.current = seq;
       estimatedTextRef.current = text;
       setTextEstimating(true);
       setTextEstimateError(null);
-      estimateMealNutrition(aiSettings, text)
-        .then(setNutrition)
-        .catch((e) =>
+      estimateMealNutrition(aiSettings, text, controller.signal)
+        .then((result) => {
+          if (seq !== estimateSeqRef.current) return;
+          // 用户已手填的字段保留，不覆盖
+          setNutrition((prev) =>
+            mergeEstimatedNutrition(prev, result, touchedNutritionRef.current)
+          );
+        })
+        .catch((e) => {
+          if (controller.signal.aborted || seq !== estimateSeqRef.current) return;
           setTextEstimateError(
             (e as Error).message || "热量估算失败，可手动填写营养数据"
-          )
-        )
-        .finally(() => setTextEstimating(false));
+          );
+        })
+        .finally(() => {
+          if (seq === estimateSeqRef.current) setTextEstimating(false);
+        });
     }, 1200);
-    return () => clearTimeout(timer);
+    return () => {
+      // 关闭弹窗 / 修改文本 / 卸载时中止在途请求
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [foodSummary, open, mode, aiSettings]);
 
   const score = computeMealScore({
@@ -267,7 +325,7 @@ export function MealLogDialog({
 
   const handleSave = () => {
     const log: MealLog = {
-      id: prefill?.id ?? uid(),
+      id: recordIdRef.current,
       timestamp: prefill?.timestamp ?? new Date().toISOString(),
       mealType,
       followedSequence,
@@ -373,6 +431,7 @@ export function MealLogDialog({
                   onClick={() => {
                     setImageUrl(undefined);
                     setAnalysisError(null);
+                    void deleteFullImage(recordIdRef.current);
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -439,13 +498,14 @@ export function MealLogDialog({
                       min="0"
                       className="h-9 px-1 text-center text-xs tabular-nums"
                       value={nutrition[f.key] ?? 0}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        touchedNutritionRef.current.add(f.key);
                         setNutrition((n) =>
                           n
                             ? { ...n, [f.key]: Number(e.target.value) || 0 }
                             : n
-                        )
-                      }
+                        );
+                      }}
                     />
                     <div className="mt-0.5 text-center text-xs text-muted-foreground">
                       {f.unit}
