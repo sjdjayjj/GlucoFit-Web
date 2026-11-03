@@ -52,6 +52,8 @@ export default function Home() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [sosOpen, setSosOpen] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
+  /** 移动端账户菜单（邮箱 + 退出登录收进头像里） */
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const mealLogs = useGlucoFitStore((s) => s.mealLogs);
   const deleteMealLog = useGlucoFitStore((s) => s.deleteMealLog);
@@ -254,25 +256,64 @@ export default function Home() {
               <Settings className="h-[18px] w-[18px]" />
             </Button>
 
-            {/* 账户状态 */}
+            {/* 账户状态：桌面保留邮箱 pill；移动端收成首字母头像 + 下拉菜单 */}
             {user ? (
-              <div className="flex min-w-0 items-center gap-1 rounded-full border border-border bg-secondary py-1 pl-3 pr-1">
-                <span
-                  className="min-w-0 max-w-[84px] xs:max-w-[140px] truncate text-xs font-medium text-muted-foreground"
-                  title={user.email}
-                >
-                  {user.email}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  title="退出登录"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
+              <>
+                <div className="hidden min-w-0 items-center gap-1 rounded-full border border-border bg-secondary py-1 pl-3 pr-1 sm:flex">
+                  <span
+                    className="min-w-0 max-w-[84px] truncate text-xs font-medium text-muted-foreground xs:max-w-[140px]"
+                    title={user.email}
+                  >
+                    {user.email}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    title="退出登录"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="relative sm:hidden">
+                  <button
+                    type="button"
+                    aria-label={`账户 ${user.email}`}
+                    aria-expanded={accountMenuOpen}
+                    onClick={() => setAccountMenuOpen((v) => !v)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-xs font-bold uppercase text-muted-foreground"
+                  >
+                    {user.email.trim().charAt(0) || "U"}
+                  </button>
+                  {accountMenuOpen && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="关闭账户菜单"
+                        className="fixed inset-0 z-40 cursor-default"
+                        onClick={() => setAccountMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-56 rounded-[8px] border border-border bg-card p-2 shadow-lg">
+                        <div className="truncate px-2 py-1 text-xs text-muted-foreground" title={user.email}>
+                          {user.email}
+                        </div>
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 rounded-[6px] px-2 py-2 text-xs font-medium text-foreground active:bg-secondary"
+                          onClick={() => {
+                            setAccountMenuOpen(false);
+                            void handleSignOut();
+                          }}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          退出登录
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
             ) : (
               <Button size="sm" onClick={() => setAuthOpen(true)} disabled={checking}>
                 <LogIn className="h-4 w-4" />

@@ -26,9 +26,10 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-[30px] rounded-[4px] px-3 text-[13px] border-[0.4px]",
-        lg: "h-11 px-8",
-        icon: "h-10 w-10",
+        // hit-target：触屏下用伪元素把命中区补到 44×44，视觉尺寸不变（见 globals.css）
+        sm: "relative hit-target h-[30px] rounded-[4px] px-3 text-[13px] border-[0.4px]",
+        lg: "relative hit-target h-11 px-8",
+        icon: "relative hit-target h-10 w-10",
       },
     },
     defaultVariants: {

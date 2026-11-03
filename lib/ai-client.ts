@@ -120,14 +120,52 @@ const BODY_OCR_PROMPT = `你是一个专业的人体成分分析识别助手。�
 {"weightKg": number,"bmi": number,"bodyFatRate": number,"bodyScore": number | null,"waterWeightKg": number | null,"fatMassKg": number,"boneMassKg": number | null,"proteinWeightKg": number | null}`;
 
 export interface BodyOcrResult {
-  weightKg: number;
-  bmi: number;
-  bodyFatRate: number;
-  fatMassKg: number;
+  /** 识别失败或超出合理区间的字段为 null（不再用 0 兜底，0 会被当成真实数据存库） */
+  weightKg: number | null;
+  bmi: number | null;
+  bodyFatRate: number | null;
+  fatMassKg: number | null;
   bodyScore: number | null;
   waterWeightKg: number | null;
   boneMassKg: number | null;
   proteinWeightKg: number | null;
+  /** 被判定为非法的字段 key，供 UI 提示「请手动填写」 */
+  invalidFields: string[];
+}
+
+/** 体脂秤各指标的合理区间（超出即视为识别错误） */
+const BODY_OCR_RANGES: Record<string, [min: number, max: number]> = {
+  weightKg: [20, 300],
+  bmi: [8, 60],
+  bodyFatRate: [3, 70],
+  fatMassKg: [1, 200],
+  bodyScore: [0, 100],
+  waterWeightKg: [5, 150],
+  boneMassKg: [0.5, 6],
+  proteinWeightKg: [1, 50],
+};
+
+/** 解析单个 OCR 数值：非有限数或越界返回 null，并记录字段名 */
+function parseOcrNumber(
+  key: string,
+  value: unknown,
+  invalid: string[]
+): number | null {
+  if (value == null || value === "") return null;
+  const raw =
+    typeof value === "number"
+      ? value
+      : Number(String(value).replace(/[^0-9.\-]/g, ""));
+  if (!Number.isFinite(raw)) {
+    invalid.push(key);
+    return null;
+  }
+  const range = BODY_OCR_RANGES[key];
+  if (range && (raw < range[0] || raw > range[1])) {
+    invalid.push(key);
+    return null;
+  }
+  return raw;
 }
 
 export async function recognizeBodyReport(
@@ -148,22 +186,40 @@ export async function recognizeBodyReport(
     ],
     { model: settings.visionModel, temperature: 0 }
   );
-  const parsed = extractJson<Record<string, number | null>>(raw);
-  if (!parsed || parsed.weightKg == null) {
+  const parsed = extractJson<Record<string, unknown>>(raw);
+  if (!parsed) {
     throw new Error("未能从图片中识别出有效数据，请尝试更清晰的截图或手动录入");
   }
-  const num = (v: unknown): number => (typeof v === "number" ? v : Number(v) || 0);
-  return {
-    weightKg: num(parsed.weightKg),
-    bmi: num(parsed.bmi),
-    bodyFatRate: num(parsed.bodyFatRate),
-    fatMassKg: num(parsed.fatMassKg),
-    bodyScore: parsed.bodyScore == null ? null : num(parsed.bodyScore),
-    waterWeightKg: parsed.waterWeightKg == null ? null : num(parsed.waterWeightKg),
-    boneMassKg: parsed.boneMassKg == null ? null : num(parsed.boneMassKg),
-    proteinWeightKg:
-      parsed.proteinWeightKg == null ? null : num(parsed.proteinWeightKg),
+  const invalidFields: string[] = [];
+  const result: BodyOcrResult = {
+    weightKg: parseOcrNumber("weightKg", parsed.weightKg, invalidFields),
+    bmi: parseOcrNumber("bmi", parsed.bmi, invalidFields),
+    bodyFatRate: parseOcrNumber("bodyFatRate", parsed.bodyFatRate, invalidFields),
+    fatMassKg: parseOcrNumber("fatMassKg", parsed.fatMassKg, invalidFields),
+    bodyScore: parseOcrNumber("bodyScore", parsed.bodyScore, invalidFields),
+    waterWeightKg: parseOcrNumber(
+      "waterWeightKg",
+      parsed.waterWeightKg,
+      invalidFields
+    ),
+    boneMassKg: parseOcrNumber("boneMassKg", parsed.boneMassKg, invalidFields),
+    proteinWeightKg: parseOcrNumber(
+      "proteinWeightKg",
+      parsed.proteinWeightKg,
+      invalidFields
+    ),
+    invalidFields: Array.from(new Set(invalidFields)),
   };
+  // 一个核心字段都没读到才算彻底失败；个别字段越界交给用户手填
+  if (
+    result.weightKg == null &&
+    result.bmi == null &&
+    result.bodyFatRate == null &&
+    result.fatMassKg == null
+  ) {
+    throw new Error("未能从图片中识别出有效数据，请尝试更清晰的截图或手动录入");
+  }
+  return result;
 }
 
 // ---------- 4.2 餐食图片估算 ----------

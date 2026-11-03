@@ -27,6 +27,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useGlucoFitStore } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { useChartTheme, useIsNarrow } from "@/lib/chart-theme";
 import {
   CRASH_THRESHOLD,
   findActiveSpikeMeal,
@@ -49,6 +50,8 @@ export function VirtualMetabolicWave() {
   const updateMealLog = useGlucoFitStore((s) => s.updateMealLog);
   const [now, setNow] = useState(() => new Date());
   const [rescued, setRescued] = useState<string | null>(null); // 已削峰的餐食 id
+  const chartTheme = useChartTheme();
+  const narrow = useIsNarrow();
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -196,7 +199,7 @@ export function VirtualMetabolicWave() {
         <div className="rounded-[10px] border-[0.8px] border-border bg-secondary p-2 pt-3">
           <div className="h-[200px] sm:h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 4, right: 6, bottom: 0, left: -18 }}>
+            <ComposedChart data={data} margin={{ top: 4, right: narrow ? 0 : 6, bottom: 0, left: narrow ? -8 : -18 }}>
               <defs>
                 <linearGradient id="glucoseFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#5b87eb" stopOpacity={0.18} />
@@ -207,19 +210,20 @@ export function VirtualMetabolicWave() {
                   <stop offset="100%" stopColor="#93b2f7" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eeeeee" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} vertical={false} />
               <XAxis
                 dataKey="time"
-                tick={{ fontSize: 10, fill: "#9d9d9d" }}
+                tick={{ fontSize: 10, fill: chartTheme.axis }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
-                minTickGap={36}
+                minTickGap={narrow ? 52 : 36}
               />
               <YAxis
                 yAxisId="glucose"
                 domain={[60, 190]}
-                tick={{ fontSize: 10, fill: "#9d9d9d" }}
+                width={narrow ? 34 : 60}
+                tick={{ fontSize: 10, fill: chartTheme.axis }}
                 tickLine={false}
                 axisLine={false}
                 />
@@ -227,7 +231,8 @@ export function VirtualMetabolicWave() {
                 yAxisId="insulin"
                 orientation="right"
                 domain={[0, 100]}
-                tick={{ fontSize: 10, fill: "#9d9d9d" }}
+                width={narrow ? 18 : 60}
+                tick={narrow ? false : { fontSize: 10, fill: chartTheme.axis }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
@@ -236,12 +241,13 @@ export function VirtualMetabolicWave() {
               <Tooltip
                 contentStyle={{
                   borderRadius: 8,
-                  border: "1px solid #e2e2e2",
-                  background: "#ffffff",
+                  border: `1px solid ${chartTheme.tooltipBorder}`,
+                  background: chartTheme.tooltipBg,
                   fontSize: 12,
-                  color: "#333333",
+                  color: chartTheme.tooltipText,
                 }}
-                labelStyle={{ color: "#7f7f7f" }}
+                labelStyle={{ color: chartTheme.tooltipLabel }}
+                itemStyle={{ color: chartTheme.tooltipText }}
                 formatter={(
                   value: number | string,
                   name: string
@@ -252,7 +258,7 @@ export function VirtualMetabolicWave() {
               />
               <Legend
                 formatter={(value: string) => value}
-                wrapperStyle={{ fontSize: 11, color: "#7f7f7f" }}
+                wrapperStyle={{ fontSize: 12, color: chartTheme.legend }}
               />
               {/* 冲高风暴区（红）与 crash 深谷（琥珀）参照线 */}
               <ReferenceLine
@@ -281,7 +287,7 @@ export function VirtualMetabolicWave() {
                 x={nearestTick(nowMinutes)}
                 stroke="#9d9d9d"
                 strokeOpacity={0.5}
-                label={{ value: "现在", fill: "#7f7f7f", fontSize: 10, position: "top" }}
+                label={{ value: "现在", fill: chartTheme.axis, fontSize: 10, position: "top" }}
               />
               {/* 预测区间底色 */}
               <ReferenceArea
